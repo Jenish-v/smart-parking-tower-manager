@@ -1,0 +1,41 @@
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# Java
+.gradle/
+build/
+target/
+out/
+*.class
+hs_err_pid*
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Environment and local configuration
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+
+# Logs and runtime data
+*.log
+logs/
+tmp/
+data/
+
+# Test and tooling output
+test-results/
+playwright-report/
+.allure/
