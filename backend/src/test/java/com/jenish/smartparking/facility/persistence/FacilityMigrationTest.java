@@ -10,9 +10,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 @SpringBootTest(properties = "spring.flyway.locations=classpath:db/migration,classpath:db/devdata")
 @Testcontainers(disabledWithoutDocker = true)
@@ -20,7 +20,7 @@ class FacilityMigrationTest {
 
     @Container
     @ServiceConnection
-    static final PostgreSQLContainer<?> DATABASE = new PostgreSQLContainer<>("postgres:17.5-alpine");
+    static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:17.5-alpine");
 
     @Autowired
     private JdbcClient jdbcClient;
