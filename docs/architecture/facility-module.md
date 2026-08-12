@@ -12,9 +12,17 @@ space identifiers. Collections are copied and ordered so consumers receive a sta
 A space can accept a vehicle when it is active and its size class is equal to or larger than the vehicle's required
 size. The size order is small, medium, then large.
 
-The reference layout is six floors, zones A through F on every floor, and spaces 1 through 200 in every zone. The
-`ReferenceFacilityLayout` policy verifies this 7,200-space shape without constructing reference data at application
-startup. The database fixture is introduced with the persistence milestone.
+The reference layout is six floors, zones A through F on every floor, and spaces 1 through 200 in every zone.
+`ReferenceFacilityLayout` verifies this 7,200-space shape without constructing reference data at application startup.
+The local database fixture reproduces the same structure with 100 small, 80 medium, and 20 large spaces in each zone.
+
+## Persistence
+
+The facility schema owns facilities, floors, zones, and parking spaces. Flyway applies the schema in every environment.
+The reference data is a separate development migration enabled only by the `local` profile. Database constraints
+enforce hierarchy uniqueness, valid identifiers, size classes, and operational states.
+
+See [Persistence Baseline](persistence.md) for table ownership, migration policy, and fixture details.
 
 ## Boundary
 

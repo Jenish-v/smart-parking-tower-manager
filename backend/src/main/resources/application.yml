@@ -1,6 +1,12 @@
 spring:
   application:
     name: smart-parking-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smart_parking}
+    username: ${DB_USERNAME:smart_parking}
+    password: ${DB_PASSWORD:smart_parking}
+  flyway:
+    locations: classpath:db/migration
   lifecycle:
     timeout-per-shutdown-phase: 20s
 

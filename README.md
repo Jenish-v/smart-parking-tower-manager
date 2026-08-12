@@ -1,85 +1,91 @@
 # Smart Parking Tower Manager
 
-Smart Parking Tower Manager is a production-oriented platform for operating a multi-level parking facility. The system will manage space allocation, vehicle movement, occupancy, reservations, pricing, and operator workflows from a single source of truth.
+Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
+facility. The implementation currently includes the backend service baseline, facility domain model, PostgreSQL schema,
+Flyway migrations, and a Docker-backed integration test suite.
 
-The reference facility contains 7,200 parking spaces:
+## Reference facility
+
+The maintained fixture contains:
 
 - 6 floors
-- 6 zones per floor
+- Zones A through F on each floor
 - 200 spaces per zone
-- Small, medium, and large space classes
+- 7,200 spaces in total
+- 100 small, 80 medium, and 20 large spaces per zone
 
-## Project status
+The allocation policy will select the lowest compatible floor, then the first zone alphabetically, then the lowest
+space number. Allocation, vehicle lookup, and parking-session APIs remain planned.
 
-The project is in repository-foundation stage. Architecture and delivery standards are being established before application code is introduced. Features described as planned are not yet implemented.
+## Architecture
 
-## Core rules
+The system is a modular monolith. Domain rules remain independent of Spring and persistence frameworks. PostgreSQL is
+the system of record, and each module owns its schema and application interfaces.
 
-The first implementation will preserve the original parking model:
-
-- Assign the lowest compatible floor first.
-- Within a floor, assign the first compatible zone alphabetically.
-- Prevent a vehicle from occupying more than one space.
-- Maintain direct vehicle-to-space and space-to-vehicle lookups.
-- Support park, unpark, find, and availability operations.
-- Keep allocation operations safe under concurrent requests.
-
-## Target architecture
-
-The system will use a modular monolith for the initial production release.
-
-| Area | Technology |
+| Area | Current implementation |
 | --- | --- |
-| Backend | Java 21, Spring Boot |
-| Data | PostgreSQL, Flyway |
-| Frontend | React, TypeScript |
-| API | REST, OpenAPI |
-| Local environment | Docker Compose |
-| Testing | JUnit, Testcontainers, frontend component tests |
-| Delivery | GitHub Actions |
-| Observability | Structured logs, metrics, health endpoints |
+| Backend | Java 21, Spring Boot 4.1 |
+| Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
+| Persistence | PostgreSQL, Flyway schema, local reference fixture |
+| Verification | JUnit, Testcontainers, Checkstyle, GitHub Actions |
+| Operations | Health, liveness, readiness, graceful shutdown |
 
-Architecture decisions and boundaries are recorded under `docs/`.
-
-## Planned capabilities
-
-- Facility, floor, zone, and space configuration
-- Deterministic space allocation
-- Entry and exit processing
-- Live occupancy views
-- Vehicle search
-- Reservations
-- Pricing rules and parking sessions
-- Operator and administrator access
-- Audit history
-- Operational metrics
-- Simulation tools for load and concurrency testing
+React, the public REST API, reservations, pricing, identity, audit, and production deployment remain planned.
 
 ## Repository layout
 
 ```text
-backend/        Spring Boot application
-frontend/       Operator dashboard
-docs/           Architecture, decisions, operations, and delivery notes
-infra/          Local and deployment infrastructure
-scripts/        Repeatable development and maintenance commands
+backend/        Spring Boot service, migrations, and backend tests
+docs/           Architecture, decisions, standards, and roadmap
+.github/        Continuous integration and repository templates
 ```
 
 Directories are added when their first maintained artifact is introduced.
 
+## Backend setup
+
+Requirements:
+
+- Java 21
+- Maven 3.6.3 or newer
+- PostgreSQL 17
+- Docker to run the integration tests
+
+From `backend/`, configure the database if it differs from the local defaults:
+
+```text
+DB_URL=jdbc:postgresql://localhost:5432/smart_parking
+DB_USERNAME=smart_parking
+DB_PASSWORD=smart_parking
+```
+
+Run the complete backend verification:
+
+```bash
+mvn verify
+```
+
+Run the service against an existing PostgreSQL database:
+
+```bash
+mvn spring-boot:run
+```
+
+Add `-Dspring-boot.run.profiles=local` to load the 7,200-space development fixture. The service exposes health endpoints
+under `/actuator/health`; no parking-operation API is available yet.
+
+See [backend/README.md](backend/README.md) for configuration and verification details.
+
 ## Documentation
 
-Start with:
-
-- `docs/architecture/overview.md`
-- `docs/roadmap.md`
-- `CONTRIBUTING.md`
-- `SECURITY.md`
-
-## Development
-
-Local setup instructions will be published with the first executable application slice. The repository will not advertise commands that do not work.
+- [Architecture overview](docs/architecture/overview.md)
+- [Facility module](docs/architecture/facility-module.md)
+- [Persistence baseline](docs/architecture/persistence.md)
+- [Delivery roadmap](docs/roadmap.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Documentation standard](docs/standards/documentation.md)
 
 ## Licence
 
-No licence has been selected yet. All rights remain with the repository owner until a licence file is added.
+No licence has been selected. All rights remain with the repository owner until a licence file is added.
