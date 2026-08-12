@@ -6,9 +6,13 @@ import java.util.stream.IntStream;
 public final class ReferenceFacilityLayout {
 
     public static final int FLOOR_COUNT = 6;
+
     public static final int ZONE_COUNT_PER_FLOOR = 6;
+
     public static final int SPACE_COUNT_PER_ZONE = 200;
+
     public static final int TOTAL_SPACE_COUNT = FLOOR_COUNT * ZONE_COUNT_PER_FLOOR * SPACE_COUNT_PER_ZONE;
+
     public static final List<ZoneCode> ZONE_CODES = List.of(
             new ZoneCode("A"),
             new ZoneCode("B"),
