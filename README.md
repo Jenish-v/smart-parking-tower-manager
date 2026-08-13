@@ -1,8 +1,8 @@
 # Smart Parking Tower Manager
 
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
-facility. The implementation currently includes the backend service baseline, facility domain model, PostgreSQL schema,
-Flyway migrations, and a Docker-backed integration test suite.
+facility. The implementation includes a Spring Boot backend, facility and allocation domains, PostgreSQL schema,
+Flyway migrations, and Docker-backed integration tests.
 
 ## Reference facility
 
@@ -14,8 +14,9 @@ The maintained fixture contains:
 - 7,200 spaces in total
 - 100 small, 80 medium, and 20 large spaces per zone
 
-The allocation policy will select the lowest compatible floor, then the first zone alphabetically, then the lowest
-space number. Allocation, vehicle lookup, and parking-session APIs remain planned.
+The allocation domain selects the lowest compatible floor, then the first zone alphabetically, then the lowest space
+number. It supports park, find, unpark, and availability operations while enforcing one active allocation per vehicle
+and per space.
 
 ## Architecture
 
@@ -26,11 +27,14 @@ the system of record, and each module owns its schema and application interfaces
 | --- | --- |
 | Backend | Java 21, Spring Boot 4.1 |
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
+| Allocation domain | Deterministic selection, park, find, unpark, availability, uniqueness rules |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Testcontainers, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-React, the public REST API, reservations, pricing, identity, audit, and production deployment remain planned.
+Allocation state is currently process-local and is not safe for concurrent requests or restart recovery. Transactional
+allocation, the public REST API, React, reservations, pricing, identity, audit, and production deployment remain
+planned.
 
 ## Repository layout
 
@@ -80,6 +84,7 @@ See [backend/README.md](backend/README.md) for configuration and verification de
 
 - [Architecture overview](docs/architecture/overview.md)
 - [Facility module](docs/architecture/facility-module.md)
+- [Allocation domain](docs/architecture/allocation-domain.md)
 - [Persistence baseline](docs/architecture/persistence.md)
 - [Delivery roadmap](docs/roadmap.md)
 - [Contribution guide](CONTRIBUTING.md)
