@@ -18,14 +18,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Service
-@ConditionalOnBean({JdbcClient.class, PlatformTransactionManager.class})
+@Lazy
 public final class JdbcAllocationService implements AllocationService {
 
     private static final String FIND_ACTIVE_ALLOCATION = """
