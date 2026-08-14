@@ -40,8 +40,9 @@ mvn verify
 ```
 
 The build enforces the Java and Maven versions, runs Checkstyle, compiles the application, and runs the test suite.
-Docker-backed tests verify the Flyway schema and reference fixture against PostgreSQL. Testcontainers skips those tests
-when Docker is unavailable; continuous integration runs them with Docker available.
+Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise concurrent allocation against
+PostgreSQL. Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker
+available.
 
 ## Run
 
@@ -59,5 +60,6 @@ GET /actuator/health/liveness
 GET /actuator/health/readiness
 ```
 
-Only health and application information are exposed through the Actuator web interface. Additional operational
-endpoints require an explicit architecture and security review.
+Only health and application information are exposed through the Actuator web interface. The transactional allocation
+service is an internal application interface until the versioned public API and its security boundary are implemented.
+Additional operational endpoints require an explicit architecture and security review.

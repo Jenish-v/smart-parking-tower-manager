@@ -1,34 +1,45 @@
 # Allocation Domain
 
-The allocation module owns active vehicle-to-space assignments and deterministic candidate selection. Its domain
-package is `com.jenish.smartparking.allocation.domain`.
+The allocation module owns active vehicle-to-space assignments and deterministic candidate selection. Domain types are
+under `com.jenish.smartparking.allocation.domain`; callers use the
+`com.jenish.smartparking.allocation.application.AllocationService` interface.
 
 ## Selection order
 
-The manager reads immutable facility configuration and orders candidates by:
+A persisted parking request locks and selects candidates by:
 
 1. floor number, ascending
 2. zone code, ascending
 3. space number, ascending
 
-A candidate must be active, unoccupied, and equal to or larger than the vehicle's required size. An occupied space is
-never returned to the candidate set until its vehicle is unparked.
+A candidate must be active, unoccupied, and equal to or larger than the vehicle's required size. An occupied space
+returns to the candidate set only after its active assignment is released.
 
 ## Invariants
 
-The module maintains two indexes: vehicle to allocation and space to vehicle. A park operation fails if the vehicle
-already has an allocation or no compatible space remains. Unpark removes both index entries. Find returns the current
-allocation without exposing either mutable index.
+The database permits at most one active assignment for a vehicle within a facility and one active assignment for a
+space. Partial unique indexes enforce both rules independently of application instances. Released rows are retained as
+allocation history.
 
-Availability reports operational and occupied totals, free spaces by physical size, and compatible capacity for each
-vehicle size. Out-of-service spaces are excluded from every availability count.
+The `AllocationManager` remains a framework-free expression of deterministic selection and availability rules.
+`JdbcAllocationService` implements transactional park, find, and unpark operations without exposing persistence types
+through the application boundary.
+
+## Concurrency
+
+A park transaction checks the vehicle's active assignment, then selects the first compatible space using
+`FOR UPDATE OF parking_spaces SKIP LOCKED`. Concurrent requests do not wait on a candidate already being assigned;
+they continue through the deterministic candidate order. The insert and row lock share one transaction.
+
+A concurrent request for the same vehicle can lock a different space before either insert is visible. The partial
+vehicle index resolves that race, the losing transaction rolls back, and the application reports that the vehicle is
+already parked. Transient data-access failures retry the complete transaction at most three times.
+
+Unpark locks the active assignment before recording its release time. Find is read-only and returns the same domain
+record used by the in-memory manager.
 
 ## Current boundary
 
-`AllocationManager` holds state in one process and is intended to express and test the domain rules. It is not a
-concurrency or recovery boundary. It does not persist assignments, coordinate database locks, create parking-session
-history, or provide request idempotency.
-
-The transactional allocation milestone will implement a persistence adapter and database constraints without moving
-selection rules into the web or persistence layers. Until that work is complete, the allocation domain is not exposed
-through the public API.
+Availability remains on the in-memory domain manager. Parking-session history, request idempotency, and the public API
+belong to later milestones. The allocation table records assignment and release facts but does not replace the parking
+session lifecycle.

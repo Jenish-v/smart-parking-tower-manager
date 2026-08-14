@@ -36,22 +36,18 @@ persistence model is not allowed.
 ## Allocation model
 
 A parking request contains a facility, vehicle identifier, and required size class. Candidate spaces are ordered by
-floor number, zone code, and space number. The allocation domain selects the first active, compatible, unoccupied space
-and maintains vehicle-to-space and space-to-vehicle indexes.
+floor number, zone code, and space number. The allocation domain selects the first active, compatible, unoccupied space.
 
-The current implementation provides process-local park, find, unpark, and availability operations. It enforces one
-allocation per vehicle and one vehicle per space within one manager instance. Database persistence, lock ordering,
-idempotency, and restart recovery remain part of later milestones.
+The allocation application interface provides transactional park, find, and unpark operations. PostgreSQL stores
+assignment and release state so it survives application restarts. Partial unique indexes enforce one active assignment
+per vehicle within a facility and one active assignment per space.
 
-Production correctness will depend on both application logic and database enforcement:
+Park operations lock candidate space rows with `FOR UPDATE SKIP LOCKED`. Selection and insertion share one transaction,
+and transient database failures retry the whole transaction at most three times. PostgreSQL concurrency tests cover
+competing requests for the same vehicle and the same remaining space.
 
-- one active parking session per vehicle
-- one active parking session per space
-- atomic transition from available to occupied
-- idempotent handling of repeated entry and exit requests
-- consistent lock ordering under concurrent allocation
-
-The locking strategy will be verified with integration and concurrency tests against PostgreSQL.
+The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Parking sessions,
+request idempotency, and the public API remain later milestones.
 
 ## Data
 
@@ -98,6 +94,7 @@ local test results.
 ## Related decisions
 
 - [ADR-0001: Use a modular monolith](../decisions/0001-use-modular-monolith.md)
+- [ADR-0002: Use PostgreSQL row locks for allocation](../decisions/0002-use-postgresql-row-locks-for-allocation.md)
 - [Facility module](facility-module.md)
 - [Allocation domain](allocation-domain.md)
-- [Persistence baseline](persistence.md)
+- [Persistence](persistence.md)

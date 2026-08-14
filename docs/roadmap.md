@@ -1,8 +1,12 @@
 # Delivery Roadmap
 
-Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and maintained documentation agree.
+Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
+maintained documentation agree.
 
-The project runs from August 10 through August 24, 2026. One day is reserved for integration and hardening without advancing the milestone number.
+The project runs from August 10 through August 24, 2026. One day is reserved for integration and hardening without
+advancing the milestone number.
+
+Milestones 1 through 5 are implemented. Milestone 6 is the next planned slice.
 
 ## Milestone 1: Backend baseline
 
