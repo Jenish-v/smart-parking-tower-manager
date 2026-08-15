@@ -40,6 +40,7 @@ record used by the in-memory manager.
 
 ## Current boundary
 
-Availability remains on the in-memory domain manager. Parking-session history, request idempotency, and the public API
-belong to later milestones. The allocation table records assignment and release facts but does not replace the parking
-session lifecycle.
+The parking-session module coordinates entry and exit through the allocation application interface; it does not access
+allocation tables. Availability remains on the in-memory domain manager. Reservations and the public API belong to later
+milestones. Allocation history records assignment facts, while parking-session history owns the operator-facing vehicle
+lifecycle.

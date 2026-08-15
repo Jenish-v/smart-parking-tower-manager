@@ -1,34 +1,38 @@
 # Persistence
 
-PostgreSQL is the system of record. Facility and allocation schemas are managed only through Flyway migrations.
+PostgreSQL is the system of record. Facility, allocation, and parking-session schemas are managed only through Flyway
+migrations.
 
 ## Schema ownership
 
-The facility module owns four tables:
-
-| Table | Purpose |
+| Module | Tables |
 | --- | --- |
-| `facilities` | Facility identity and name |
-| `parking_floors` | Ordered floors within a facility |
-| `parking_zones` | Named zones within a floor |
-| `parking_spaces` | Numbered, sized spaces and operational state |
+| Facility | `facilities`, `parking_floors`, `parking_zones`, `parking_spaces` |
+| Allocation | `active_allocations` |
+| Parking sessions | `parking_sessions`, `parking_session_requests` |
 
-The allocation module owns `active_allocations`. Each row records a vehicle, required size, selected space, allocation
-time, and optional release time. Partial unique indexes prevent more than one active row for a vehicle within a facility
-or for a parking space. History indexes support lookup without weakening the active-assignment constraints.
+The facility hierarchy stores configured space identity, size, and operational state. Natural identifiers are unique
+within their parent, and check constraints reproduce domain identifier and state rules.
 
-Natural facility identifiers are unique within their parent: floor number within a facility, zone code within a floor,
-and space number within a zone. Check constraints reproduce domain identifier, size-class, operational-state, and
-allocation timestamp rules at the database boundary.
+Allocation rows record vehicle-to-space assignment and release facts. Partial unique indexes prevent more than one
+active assignment for a vehicle within a facility or for a parking space.
+
+Parking-session rows record entry, active stay, and exit. They retain the allocated location as a lifecycle fact.
+Partial indexes prevent duplicate active vehicles and spaces. Request rows bind idempotency identifiers to operations
+and sessions.
 
 ## Transactions and locking
 
 The allocation adapter selects a compatible `parking_spaces` row with
 `FOR UPDATE OF parking_spaces SKIP LOCKED`. Selection, insertion, and release execute within database transactions.
 The fixed floor, zone, and space ordering preserves deterministic selection among rows that are not already locked.
-Bounded retries rerun a complete transaction after transient data-access failures.
+Bounded retries rerun a complete allocation transaction after transient data-access failures.
 
-See [ADR-0002](../decisions/0002-use-postgresql-row-locks-for-allocation.md) for the decision and trade-offs.
+Parking-session entry and exit wrap calls to the allocation application interface in an outer transaction. Standard
+Spring transaction propagation makes session and allocation writes commit or roll back together. PostgreSQL advisory
+transaction locks serialize reuse of one request identifier without creating process-local coordination.
+
+See [ADR-0002](../decisions/0002-use-postgresql-row-locks-for-allocation.md) for the allocation locking decision.
 
 ## Migrations
 
@@ -39,4 +43,4 @@ The reference fixture uses deterministic UUIDs and creates 7,200 active spaces a
 floor. Every zone has 100 small, 80 medium, and 20 large spaces.
 
 Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
-release history, concurrent vehicle claims, concurrent space claims, and transaction retries.
+allocation concurrency, session transitions, request replay, rollback behaviour, and history.

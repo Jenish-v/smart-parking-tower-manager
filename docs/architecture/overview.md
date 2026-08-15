@@ -23,7 +23,7 @@ extraction. Distribution is not a goal until scale or organizational ownership p
 | --- | --- |
 | Facility | Floors, zones, spaces, compatibility, operational state |
 | Allocation | Candidate selection and active vehicle-to-space assignment |
-| Parking sessions | Entry, active stay, exit, and vehicle history |
+| Parking sessions | Idempotent entry, active stay, exit, and vehicle history |
 | Reservations | Future capacity claims and arrival handling |
 | Pricing | Rate plans, fee calculation, and adjustments |
 | Identity | Operator identity, roles, and access policy |
@@ -33,21 +33,21 @@ extraction. Distribution is not a goal until scale or organizational ownership p
 A module owns its tables and exposes behaviour through application interfaces. Direct access to another module's
 persistence model is not allowed.
 
-## Allocation model
+## Parking workflow
 
-A parking request contains a facility, vehicle identifier, and required size class. Candidate spaces are ordered by
-floor number, zone code, and space number. The allocation domain selects the first active, compatible, unoccupied space.
+A parking request contains a request identifier, facility, vehicle identifier, and required size class. The
+parking-session module coordinates the lifecycle through the allocation application interface.
 
-The allocation application interface provides transactional park, find, and unpark operations. PostgreSQL stores
-assignment and release state so it survives application restarts. Partial unique indexes enforce one active assignment
-per vehicle within a facility and one active assignment per space.
+Entry atomically selects a compatible space and starts one active session. Exit atomically releases the allocation and
+completes that session. PostgreSQL stores both modules' state so it survives application restarts. Request identifiers
+make matching entry and exit retries idempotent, including retries processed by another application instance.
 
-Park operations lock candidate space rows with `FOR UPDATE SKIP LOCKED`. Selection and insertion share one transaction,
-and transient database failures retry the whole transaction at most three times. PostgreSQL concurrency tests cover
-competing requests for the same vehicle and the same remaining space.
+Allocation candidates are ordered by floor number, zone code, and space number. Park operations lock candidate rows with
+`FOR UPDATE SKIP LOCKED`; partial indexes enforce one active assignment and session per vehicle and space. PostgreSQL
+concurrency tests cover competing allocation and idempotent session requests.
 
-The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Parking sessions,
-request idempotency, and the public API remain later milestones.
+The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Reservations and
+the public API remain later milestones.
 
 ## Data
 
@@ -57,10 +57,12 @@ created through a local-only development fixture, not application startup code.
 Redis is not part of the initial baseline. It will be introduced only if measured caching, coordination, or delivery
 requirements justify the additional failure mode.
 
+Completed sessions and their request records are retained without automated deletion. A production retention and
+deletion policy for vehicle identifiers remains required before deployment.
+
 ## API and user interface
 
-The planned backend API is versioned REST documented with OpenAPI. Mutation requests will use idempotency keys where
-clients may retry. Errors will use one stable machine-readable format.
+The planned backend API is versioned REST documented with OpenAPI. Errors will use one stable machine-readable format.
 
 The planned React and TypeScript application will support operator workflows and live occupancy. Live updates will use
 server-sent events unless bidirectional communication becomes necessary.
@@ -72,7 +74,7 @@ sensitive application operations. Administrative changes, manual overrides, and 
 the audit log.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
-documented before production readiness.
+approved before production readiness.
 
 ## Operations
 
@@ -97,4 +99,5 @@ local test results.
 - [ADR-0002: Use PostgreSQL row locks for allocation](../decisions/0002-use-postgresql-row-locks-for-allocation.md)
 - [Facility module](facility-module.md)
 - [Allocation domain](allocation-domain.md)
+- [Parking sessions](parking-sessions.md)
 - [Persistence](persistence.md)

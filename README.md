@@ -1,8 +1,8 @@
 # Smart Parking Tower Manager
 
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
-facility. The implementation includes a Spring Boot backend, facility and allocation domains, PostgreSQL persistence,
-Flyway migrations, and Docker-backed integration tests.
+facility. The implementation includes a Spring Boot backend, facility, allocation, and parking-session modules,
+PostgreSQL persistence, Flyway migrations, and Docker-backed integration tests.
 
 ## Reference facility
 
@@ -14,9 +14,9 @@ The maintained fixture contains:
 - 7,200 spaces in total
 - 100 small, 80 medium, and 20 large spaces per zone
 
-Allocation selects the lowest compatible floor, then the first zone alphabetically, then the lowest space number. Park,
-find, and unpark operations persist active assignments transactionally. PostgreSQL row locks coordinate concurrent
-allocation, and database indexes enforce one active assignment per vehicle and per space.
+Allocation selects the lowest compatible floor, then the first zone alphabetically, then the lowest space number. Entry
+and exit commands atomically coordinate parking sessions with allocation. Request identifiers make command retries
+idempotent, while PostgreSQL constraints and row locks protect active vehicles and spaces under concurrency.
 
 ## Architecture
 
@@ -27,15 +27,15 @@ the system of record, and each module owns its schema and application interfaces
 | --- | --- |
 | Backend | Java 21, Spring Boot 4.1 |
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
-| Allocation domain | Deterministic selection, park, find, unpark, availability, uniqueness rules |
-| Allocation persistence | Atomic assignment and release, row locking, bounded transient retries |
+| Allocation | Deterministic selection, persisted assignments, row locking, bounded transient retries |
+| Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Testcontainers concurrency tests, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The public REST API, parking sessions, React interface, reservations, pricing, identity, audit, and production deployment
-remain planned. Availability calculations currently use the in-memory domain model and are not exposed through an
-application API.
+The public REST API, React interface, reservations, pricing, identity, audit, and production deployment remain planned.
+Availability calculations currently use the in-memory allocation model and are not exposed through an application API.
+Session and idempotency history is retained without automated deletion until a production retention policy is approved.
 
 ## Repository layout
 
@@ -86,6 +86,7 @@ See [backend/README.md](backend/README.md) for configuration and verification de
 - [Architecture overview](docs/architecture/overview.md)
 - [Facility module](docs/architecture/facility-module.md)
 - [Allocation domain](docs/architecture/allocation-domain.md)
+- [Parking sessions](docs/architecture/parking-sessions.md)
 - [Persistence](docs/architecture/persistence.md)
 - [Transactional locking decision](docs/decisions/0002-use-postgresql-row-locks-for-allocation.md)
 - [Delivery roadmap](docs/roadmap.md)
