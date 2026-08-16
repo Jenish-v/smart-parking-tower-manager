@@ -27,6 +27,14 @@ records are stored with their session so replay remains available after applicat
 A replay returns the session's current state. An entry replay after a later successful exit therefore returns the same
 session identity in its completed state.
 
+## Interfaces
+
+`ParkingSessionService` is the module's application boundary. `ParkingSessionController` is an inbound HTTP adapter
+that maps `/api/v1` requests to the application interface and domain responses to API representations. It contains no
+allocation or persistence logic.
+
+The OpenAPI contract and [API guide](../api/README.md) define validation, idempotency, response, and error behaviour.
+
 ## Ownership and transactions
 
 The parking-session module owns `parking_sessions` and `parking_session_requests`. It does not query or update the

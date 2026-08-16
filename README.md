@@ -1,8 +1,8 @@
 # Smart Parking Tower Manager
 
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
-facility. The implementation includes a Spring Boot backend, facility, allocation, and parking-session modules,
-PostgreSQL persistence, Flyway migrations, and Docker-backed integration tests.
+facility. The implementation includes a Spring Boot backend, facility, allocation, and parking-session modules, a
+versioned REST API, PostgreSQL persistence, Flyway migrations, and Docker-backed integration tests.
 
 ## Reference facility
 
@@ -29,19 +29,23 @@ the system of record, and each module owns its schema and application interfaces
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
 | Allocation | Deterministic selection, persisted assignments, row locking, bounded transient retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
+| API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
-| Verification | JUnit, Testcontainers concurrency tests, Checkstyle, GitHub Actions |
+| Verification | JUnit, HTTP integration tests, Testcontainers, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The public REST API, React interface, reservations, pricing, identity, audit, and production deployment remain planned.
-Availability calculations currently use the in-memory allocation model and are not exposed through an application API.
-Session and idempotency history is retained without automated deletion until a production retention policy is approved.
+The React interface, reservations, pricing, identity, audit, and production deployment remain planned. Availability
+calculations currently use the in-memory allocation model and are not exposed through the API. Session and idempotency
+history is retained without automated deletion until a production retention policy is approved.
+
+The API does not yet authenticate or authorize callers. It is suitable for development and contract integration, not
+internet-facing production deployment.
 
 ## Repository layout
 
 ```text
-backend/        Spring Boot service, migrations, and backend tests
-docs/           Architecture, decisions, standards, and roadmap
+backend/        Spring Boot service, migrations, API contract, and backend tests
+docs/           Architecture, API guidance, decisions, standards, and roadmap
 .github/        Continuous integration and repository templates
 ```
 
@@ -70,16 +74,36 @@ Run the complete backend verification:
 mvn verify
 ```
 
-Run the service against an existing PostgreSQL database:
+Run the service with the 7,200-space development fixture:
 
 ```bash
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-Add `-Dspring-boot.run.profiles=local` to load the 7,200-space development fixture. The service exposes health endpoints
-under `/actuator/health`; no parking-operation API is available yet.
+The service listens on port 8080. Health endpoints are under `/actuator/health`, and the OpenAPI contract is available
+at `/openapi.yaml`.
 
-See [backend/README.md](backend/README.md) for configuration and verification details.
+## API surface
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| POST | `/api/v1/facilities/{facilityId}/parking-sessions/entries` | Start or replay entry |
+| POST | `/api/v1/facilities/{facilityId}/parking-sessions/exits` | Complete or replay exit |
+| GET | `/api/v1/facilities/{facilityId}/parking-sessions/active` | Find the active session |
+| GET | `/api/v1/facilities/{facilityId}/parking-sessions` | List vehicle history |
+
+Mutation requests require an `Idempotency-Key` header containing a UUID. For example:
+
+```bash
+curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/entries \
+  -X POST \
+  -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: 3d30408d-7c3a-4f61-9138-3b9b728782da' \
+  -d '{"vehicleIdentifier":"TOR 501","requiredSize":"SMALL"}'
+```
+
+See [backend/README.md](backend/README.md) for runtime details and [docs/api/README.md](docs/api/README.md) for request,
+response, idempotency, and error behaviour.
 
 ## Documentation
 
@@ -87,6 +111,8 @@ See [backend/README.md](backend/README.md) for configuration and verification de
 - [Facility module](docs/architecture/facility-module.md)
 - [Allocation domain](docs/architecture/allocation-domain.md)
 - [Parking sessions](docs/architecture/parking-sessions.md)
+- [API guide](docs/api/README.md)
+- [OpenAPI contract](backend/src/main/resources/static/openapi.yaml)
 - [Persistence](docs/architecture/persistence.md)
 - [Transactional locking decision](docs/decisions/0002-use-postgresql-row-locks-for-allocation.md)
 - [Delivery roadmap](docs/roadmap.md)

@@ -46,8 +46,8 @@ Allocation candidates are ordered by floor number, zone code, and space number. 
 `FOR UPDATE SKIP LOCKED`; partial indexes enforce one active assignment and session per vehicle and space. PostgreSQL
 concurrency tests cover competing allocation and idempotent session requests.
 
-The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Reservations and
-the public API remain later milestones.
+The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Reservations
+remain a later milestone.
 
 ## Data
 
@@ -62,16 +62,20 @@ deletion policy for vehicle identifiers remains required before deployment.
 
 ## API and user interface
 
-The planned backend API is versioned REST documented with OpenAPI. Errors will use one stable machine-readable format.
+The backend exposes versioned REST endpoints for entry, exit, active lookup, and vehicle history. The HTTP adapter calls
+the parking-session application interface and does not access persistence implementations. The OpenAPI 3.0 contract is
+served at `/openapi.yaml`.
 
-The planned React and TypeScript application will support operator workflows and live occupancy. Live updates will use
-server-sent events unless bidirectional communication becomes necessary.
+Errors use RFC problem details with stable codes. Mutation commands require UUID idempotency keys. Request validation
+runs at the HTTP boundary before domain construction.
+
+The planned React and TypeScript application will consume this API. Live updates will use server-sent events unless
+bidirectional communication becomes necessary.
 
 ## Security
 
-Authentication will use OpenID Connect. Authorization will be role-based at the API boundary and reinforced within
-sensitive application operations. Administrative changes, manual overrides, and pricing adjustments will be written to
-the audit log.
+The API currently has no authentication or authorization. It must remain in a trusted development environment until the
+identity milestone implements and verifies those boundaries.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
 approved before production readiness.
@@ -100,4 +104,5 @@ local test results.
 - [Facility module](facility-module.md)
 - [Allocation domain](allocation-domain.md)
 - [Parking sessions](parking-sessions.md)
+- [API guide](../api/README.md)
 - [Persistence](persistence.md)

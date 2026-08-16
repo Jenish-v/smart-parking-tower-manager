@@ -1,7 +1,7 @@
 # Backend
 
-The backend is a Java 21 and Spring Boot service. It owns the parking domain, public API, persistence, and operational
-endpoints.
+The backend is a Java 21 and Spring Boot service. It owns the parking domain, versioned REST API, persistence, and
+operational endpoints.
 
 ## Requirements
 
@@ -40,9 +40,9 @@ mvn verify
 ```
 
 The build enforces the Java and Maven versions, runs Checkstyle, compiles the application, and runs the test suite.
-Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise concurrent allocation and
-idempotent parking-session commands against PostgreSQL. Testcontainers skips those tests when Docker is unavailable;
-continuous integration runs them with Docker available.
+Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise HTTP validation, idempotent
+parking-session commands, and concurrent allocation against PostgreSQL. Testcontainers skips those tests when Docker is
+unavailable; continuous integration runs them with Docker available.
 
 ## Run
 
@@ -55,11 +55,16 @@ mvn spring-boot:run
 The service listens on port 8080 and exposes:
 
 ```text
-GET /actuator/health
-GET /actuator/health/liveness
-GET /actuator/health/readiness
+GET  /actuator/health
+GET  /actuator/health/liveness
+GET  /actuator/health/readiness
+GET  /openapi.yaml
+POST /api/v1/facilities/{facilityId}/parking-sessions/entries
+POST /api/v1/facilities/{facilityId}/parking-sessions/exits
+GET  /api/v1/facilities/{facilityId}/parking-sessions/active?vehicleIdentifier={value}
+GET  /api/v1/facilities/{facilityId}/parking-sessions?vehicleIdentifier={value}
 ```
 
-Only health and application information are exposed through the Actuator web interface. Allocation and parking-session
-services are internal application interfaces until the versioned public API and its security boundary are implemented.
-Additional operational endpoints require an explicit architecture and security review.
+Mutation endpoints require a UUID `Idempotency-Key` header. Errors use `application/problem+json` and include a stable
+`code` property. The API currently has no authentication or authorization and must not be exposed as a production
+internet endpoint. Additional Actuator endpoints require an explicit architecture and security review.
