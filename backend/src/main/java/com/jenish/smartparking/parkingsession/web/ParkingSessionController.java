@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -26,13 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/facilities/{facilityId}/parking-sessions")
 @Validated
-public final class ParkingSessionController {
+public class ParkingSessionController {
 
     private static final String IDEMPOTENCY_KEY = "Idempotency-Key";
 
     private final ParkingSessionService sessionService;
 
-    public ParkingSessionController(ParkingSessionService sessionService) {
+    public ParkingSessionController(@Lazy ParkingSessionService sessionService) {
         this.sessionService = sessionService;
     }
 
