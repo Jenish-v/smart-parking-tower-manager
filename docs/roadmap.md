@@ -6,7 +6,7 @@ maintained documentation agree.
 The project runs from August 10 through August 24, 2026. One day is reserved for integration and hardening without
 advancing the milestone number.
 
-Milestones 1 through 7 are implemented. Milestone 8 is the next planned slice.
+Milestones 1 through 8 are implemented. Milestone 9 is the next planned slice.
 
 ## Milestone 1: Backend baseline
 

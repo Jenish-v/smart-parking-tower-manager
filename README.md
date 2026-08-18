@@ -1,8 +1,9 @@
 # Smart Parking Tower Manager
 
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
-facility. The implementation includes a Spring Boot backend, facility, allocation, and parking-session modules, a
-versioned REST API, PostgreSQL persistence, Flyway migrations, and Docker-backed integration tests.
+facility. The implementation includes a Spring Boot backend, a React operator shell, facility, allocation, and
+parking-session modules, a versioned REST API, PostgreSQL persistence, Flyway migrations, and automated backend and
+frontend checks.
 
 ## Reference facility
 
@@ -21,35 +22,37 @@ idempotent, while PostgreSQL constraints and row locks protect active vehicles a
 ## Architecture
 
 The system is a modular monolith. Domain rules remain independent of Spring and persistence frameworks. PostgreSQL is
-the system of record, and each module owns its schema and application interfaces.
+the system of record, and each backend module owns its schema and application interfaces. The browser application calls
+the public API through a typed transport boundary.
 
 | Area | Current implementation |
 | --- | --- |
 | Backend | Java 21, Spring Boot 4.1 |
+| Frontend | React 19, TypeScript, Vite, responsive operator layout and routing |
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
 | Allocation | Deterministic selection, persisted assignments, row locking, bounded transient retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
-| Verification | JUnit, HTTP integration tests, Testcontainers, Checkstyle, GitHub Actions |
+| Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The React interface, reservations, pricing, identity, audit, and production deployment remain planned. Availability
-calculations currently use the in-memory allocation model and are not exposed through the API. Session and idempotency
-history is retained without automated deletion until a production retention policy is approved.
+The dashboard currently presents configured reference values and navigation only. Live occupancy, vehicle search, entry,
+and exit controls remain planned. Reservations, pricing, identity, audit, and production deployment also remain planned.
+Availability calculations currently use the in-memory allocation model and are not exposed through the API. Session and
+idempotency history is retained without automated deletion until a production retention policy is approved.
 
-The API does not yet authenticate or authorize callers. It is suitable for development and contract integration, not
-internet-facing production deployment.
+The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
+integration, not internet-facing production deployment.
 
 ## Repository layout
 
 ```text
 backend/        Spring Boot service, migrations, API contract, and backend tests
+frontend/       React operator dashboard, typed API client, and component tests
 docs/           Architecture, API guidance, decisions, standards, and roadmap
 .github/        Continuous integration and repository templates
 ```
-
-Directories are added when their first maintained artifact is introduced.
 
 ## Backend setup
 
@@ -83,6 +86,25 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 The service listens on port 8080. Health endpoints are under `/actuator/health`, and the OpenAPI contract is available
 at `/openapi.yaml`.
 
+## Frontend setup
+
+Requirements are Node.js 22.12 or newer and npm 11 or newer. From `frontend/`, install dependencies and run the
+development server:
+
+```bash
+npm ci
+npm run dev
+```
+
+The dashboard listens on port 5173. Its development server proxies API requests to the backend on port 8080. Run the
+frontend lint, test, type-check, and production-build sequence with:
+
+```bash
+npm run check
+```
+
+See [frontend/README.md](frontend/README.md) for configuration and individual commands.
+
 ## API surface
 
 | Method | Path | Purpose |
@@ -111,6 +133,7 @@ response, idempotency, and error behaviour.
 - [Facility module](docs/architecture/facility-module.md)
 - [Allocation domain](docs/architecture/allocation-domain.md)
 - [Parking sessions](docs/architecture/parking-sessions.md)
+- [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
 - [OpenAPI contract](backend/src/main/resources/static/openapi.yaml)
 - [Persistence](docs/architecture/persistence.md)

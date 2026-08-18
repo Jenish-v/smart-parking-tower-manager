@@ -69,13 +69,19 @@ served at `/openapi.yaml`.
 Errors use RFC problem details with stable codes. Mutation commands require UUID idempotency keys. Request validation
 runs at the HTTP boundary before domain construction.
 
-The planned React and TypeScript application will consume this API. Live updates will use server-sent events unless
-bidirectional communication becomes necessary.
+The React and TypeScript application is a separate module that consumes only the public HTTP contract. Its baseline
+contains the responsive operator shell, routes, and a typed API client. Route-level pages own user-visible state;
+presentation components do not call `fetch` directly. The current dashboard displays configuration facts only, not
+invented occupancy or health data. Live workflows and occupancy updates remain Milestone 9 work.
+
+The Vite development server proxies same-origin API paths to the backend. A separately hosted deployment must explicitly
+configure the API base URL and cross-origin policy. Live updates will use server-sent events unless bidirectional
+communication becomes necessary.
 
 ## Security
 
-The API currently has no authentication or authorization. It must remain in a trusted development environment until the
-identity milestone implements and verifies those boundaries.
+The API and dashboard currently have no authentication or authorization. They must remain in a trusted development
+environment until the identity milestone implements and verifies those boundaries.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
 approved before production readiness.
@@ -86,7 +92,8 @@ The application currently provides startup, readiness, and liveness health endpo
 operational work includes structured logs, correlation identifiers, allocation and database metrics, and trace
 propagation.
 
-Local development uses PostgreSQL and Maven. Production packaging and deployment topology remain undecided.
+Local development uses PostgreSQL, Maven, Node.js, and Vite. Production packaging and deployment topology remain
+undecided.
 
 ## Design targets
 
@@ -105,4 +112,5 @@ local test results.
 - [Allocation domain](allocation-domain.md)
 - [Parking sessions](parking-sessions.md)
 - [API guide](../api/README.md)
+- [Frontend component standards](../frontend/component-standards.md)
 - [Persistence](persistence.md)
