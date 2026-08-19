@@ -6,9 +6,11 @@ export interface ParkingSession {
   facilityId: string
   vehicleIdentifier: string
   requiredSize: SpaceSize
-  floorNumber: number
-  zoneCode: string
-  spaceNumber: number
+  space: {
+    floorNumber: number
+    zoneCode: string
+    spaceNumber: number
+  }
   status: SessionStatus
   enteredAt: string
   exitedAt: string | null
@@ -53,6 +55,38 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export interface EntryCommand {
+  vehicleIdentifier: string
+  requiredSize: SpaceSize
+}
+
+function mutateSession(path: string, body: EntryCommand | { vehicleIdentifier: string }, idempotencyKey: string) {
+  return request<ParkingSession>(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+    },
+    body: JSON.stringify(body),
+  })
+}
+
+export function enterVehicle(facilityId: string, command: EntryCommand, idempotencyKey: string) {
+  return mutateSession(
+    `/api/v1/facilities/${encodeURIComponent(facilityId)}/parking-sessions/entries`,
+    command,
+    idempotencyKey,
+  )
+}
+
+export function exitVehicle(facilityId: string, vehicleIdentifier: string, idempotencyKey: string) {
+  return mutateSession(
+    `/api/v1/facilities/${encodeURIComponent(facilityId)}/parking-sessions/exits`,
+    { vehicleIdentifier },
+    idempotencyKey,
+  )
 }
 
 export function findActiveSession(facilityId: string, vehicleIdentifier: string) {

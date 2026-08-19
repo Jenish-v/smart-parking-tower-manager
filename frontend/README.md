@@ -1,8 +1,8 @@
 # Operator Dashboard
 
-The operator dashboard is a React and TypeScript browser application. This baseline provides the responsive application
-shell, route structure, typed parking-session API client, and reference-facility overview. Entry, exit, search, and live
-occupancy remain intentionally unavailable until Milestone 9 connects those workflows to backend state.
+The operator dashboard is a React and TypeScript browser application. It provides a responsive application shell,
+reference-facility overview, parking entry and exit, and vehicle session search through the typed parking-session API
+client. Live occupancy remains unavailable until a reporting endpoint and update stream are implemented.
 
 ## Requirements
 
@@ -25,8 +25,9 @@ npm run dev
 ```
 
 Vite serves the dashboard on `http://localhost:5173` and proxies `/api` and `/openapi.yaml` to
-`http://localhost:8080`. Set `VITE_API_BASE_URL` only when the API is hosted on another origin. That deployment must
-also configure an appropriate cross-origin policy.
+`http://localhost:8080`. The dashboard targets the reference facility by default. Set `VITE_FACILITY_ID` for another
+configured facility. Set `VITE_API_BASE_URL` only when the API is hosted on another origin; that deployment must also
+configure an appropriate cross-origin policy.
 
 ## Verification
 

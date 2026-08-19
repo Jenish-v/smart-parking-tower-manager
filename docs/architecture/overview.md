@@ -69,10 +69,10 @@ served at `/openapi.yaml`.
 Errors use RFC problem details with stable codes. Mutation commands require UUID idempotency keys. Request validation
 runs at the HTTP boundary before domain construction.
 
-The React and TypeScript application is a separate module that consumes only the public HTTP contract. Its baseline
-contains the responsive operator shell, routes, and a typed API client. Route-level pages own user-visible state;
-presentation components do not call `fetch` directly. The current dashboard displays configuration facts only, not
-invented occupancy or health data. Live workflows and occupancy updates remain Milestone 9 work.
+The React and TypeScript application is a separate module that consumes only the public HTTP contract. It provides the
+responsive operator shell, entry and exit commands, and vehicle session search through a typed API client. Route-level
+pages own pending, success, empty, and failure states; presentation components do not call `fetch` directly. Mutation
+retries preserve their idempotency key until a command succeeds. Live occupancy updates remain Milestone 9 work.
 
 The Vite development server proxies same-origin API paths to the backend. A separately hosted deployment must explicitly
 configure the API base URL and cross-origin policy. Live updates will use server-sent events unless bidirectional

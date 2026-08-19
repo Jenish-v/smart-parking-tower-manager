@@ -37,8 +37,9 @@ the public API through a typed transport boundary.
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The dashboard currently presents configured reference values and navigation only. Live occupancy, vehicle search, entry,
-and exit controls remain planned. Reservations, pricing, identity, audit, and production deployment also remain planned.
+The dashboard presents configured reference values and supports parking entry, exit, and vehicle session search against
+the public API. Live occupancy updates remain planned. Reservations, pricing, identity, audit, and production deployment
+also remain planned.
 Availability calculations currently use the in-memory allocation model and are not exposed through the API. Session and
 idempotency history is retained without automated deletion until a production retention policy is approved.
 
@@ -96,8 +97,9 @@ npm ci
 npm run dev
 ```
 
-The dashboard listens on port 5173. Its development server proxies API requests to the backend on port 8080. Run the
-frontend lint, test, type-check, and production-build sequence with:
+The dashboard listens on port 5173. Its development server proxies API requests to the backend on port 8080. It uses the
+reference facility by default; set `VITE_FACILITY_ID` to target another configured facility. Run the frontend lint,
+test, type-check, and production-build sequence with:
 
 ```bash
 npm run check

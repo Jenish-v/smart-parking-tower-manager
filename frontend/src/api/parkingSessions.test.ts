@@ -1,4 +1,4 @@
-import { findActiveSession, listVehicleHistory } from './parkingSessions'
+import { enterVehicle, findActiveSession, listVehicleHistory } from './parkingSessions'
 
 describe('parking session API client', () => {
   it('encodes facility and vehicle identifiers for active lookup', async () => {
@@ -34,5 +34,22 @@ describe('parking session API client', () => {
       message: 'No parking sessions were found.',
       problem: { status: 404, code: 'SESSION_NOT_FOUND' },
     })
+  })
+
+  it('sends entry commands with JSON and an idempotency key', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'session-1' }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    await enterVehicle('facility-1', { vehicleIdentifier: 'TOR 501', requiredSize: 'MEDIUM' }, 'request-1')
+
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/v1/facilities/facility-1/parking-sessions/entries')
+    expect(options?.method).toBe('POST')
+    expect(new Headers(options?.headers).get('Idempotency-Key')).toBe('request-1')
+    expect(options?.body).toBe(JSON.stringify({ vehicleIdentifier: 'TOR 501', requiredSize: 'MEDIUM' }))
   })
 })

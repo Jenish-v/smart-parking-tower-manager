@@ -20,6 +20,7 @@ describe('operator application', () => {
     await user.click(screen.getByRole('link', { name: 'Parking operations' }))
 
     expect(screen.getByRole('heading', { name: 'Entry and exit' })).toBeInTheDocument()
-    expect(screen.getByText('Workflow integration pending')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Assign space' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Complete exit' })).toBeDisabled()
   })
 })
