@@ -30,7 +30,7 @@ the public API through a typed transport boundary.
 | Backend | Java 21, Spring Boot 4.1 |
 | Frontend | React 19, TypeScript, Vite, responsive operator layout and routing |
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
-| Allocation | Deterministic selection, persisted assignments, row locking, bounded transient retries |
+| Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
@@ -38,9 +38,8 @@ the public API through a typed transport boundary.
 | Operations | Health, liveness, readiness, graceful shutdown |
 
 The dashboard presents configured reference values and supports parking entry, exit, and vehicle session search against
-the public API. Live occupancy updates remain planned. Reservations, pricing, identity, audit, and production deployment
-also remain planned.
-Availability calculations currently use the in-memory allocation model and are not exposed through the API. Session and
+the public API. The backend exposes point-in-time occupancy totals by floor; dashboard refresh and streaming updates
+remain planned. Reservations, pricing, identity, audit, and production deployment also remain planned. Session and
 idempotency history is retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
@@ -115,6 +114,7 @@ See [frontend/README.md](frontend/README.md) for configuration and individual co
 | POST | `/api/v1/facilities/{facilityId}/parking-sessions/exits` | Complete or replay exit |
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions/active` | Find the active session |
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions` | List vehicle history |
+| GET | `/api/v1/facilities/{facilityId}/occupancy` | Get facility and floor occupancy snapshot |
 
 Mutation requests require an `Idempotency-Key` header containing a UUID. For example:
 
@@ -135,6 +135,7 @@ response, idempotency, and error behaviour.
 - [Facility module](docs/architecture/facility-module.md)
 - [Allocation domain](docs/architecture/allocation-domain.md)
 - [Parking sessions](docs/architecture/parking-sessions.md)
+- [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
 - [OpenAPI contract](backend/src/main/resources/static/openapi.yaml)

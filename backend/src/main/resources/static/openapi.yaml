@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Smart Parking Tower Manager API
   version: 1.0.0
-  description: Versioned parking-session entry, exit, active lookup, and history operations.
+  description: Versioned parking-session and occupancy reporting operations.
 servers:
   - url: /
 paths:
@@ -101,6 +101,23 @@ paths:
                   $ref: '#/components/schemas/ParkingSession'
         '400':
           $ref: '#/components/responses/BadRequest'
+  /api/v1/facilities/{facilityId}/occupancy:
+    get:
+      operationId: getOccupancy
+      summary: Get a point-in-time occupancy snapshot
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Facility and floor occupancy counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OccupancySnapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   parameters:
     FacilityId:
@@ -209,6 +226,63 @@ components:
         spaceNumber:
           type: integer
           minimum: 1
+    OccupancySnapshot:
+      type: object
+      required:
+        - facilityId
+        - capturedAt
+        - totalSpaces
+        - operationalSpaces
+        - occupiedSpaces
+        - availableSpaces
+        - floors
+      properties:
+        facilityId:
+          type: string
+          format: uuid
+        capturedAt:
+          type: string
+          format: date-time
+        totalSpaces:
+          type: integer
+          format: int64
+        operationalSpaces:
+          type: integer
+          format: int64
+        occupiedSpaces:
+          type: integer
+          format: int64
+        availableSpaces:
+          type: integer
+          format: int64
+        floors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FloorOccupancy'
+    FloorOccupancy:
+      type: object
+      required:
+        - floorNumber
+        - totalSpaces
+        - operationalSpaces
+        - occupiedSpaces
+        - availableSpaces
+      properties:
+        floorNumber:
+          type: integer
+          minimum: 1
+        totalSpaces:
+          type: integer
+          format: int64
+        operationalSpaces:
+          type: integer
+          format: int64
+        occupiedSpaces:
+          type: integer
+          format: int64
+        availableSpaces:
+          type: integer
+          format: int64
     Problem:
       type: object
       required:
@@ -259,7 +333,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     NotFound:
-      description: Active parking session was not found
+      description: Requested facility or active parking session was not found
       content:
         application/problem+json:
           schema:

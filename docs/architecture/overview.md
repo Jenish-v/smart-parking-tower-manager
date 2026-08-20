@@ -72,7 +72,11 @@ runs at the HTTP boundary before domain construction.
 The React and TypeScript application is a separate module that consumes only the public HTTP contract. It provides the
 responsive operator shell, entry and exit commands, and vehicle session search through a typed API client. Route-level
 pages own pending, success, empty, and failure states; presentation components do not call `fetch` directly. Mutation
-retries preserve their idempotency key until a command succeeds. Live occupancy updates remain Milestone 9 work.
+retries preserve their idempotency key until a command succeeds.
+
+The allocation application interface exposes point-in-time occupancy totals backed by PostgreSQL. The reporting HTTP
+adapter publishes facility and per-floor counts without reading another module's tables directly. Dashboard refresh and
+server-sent updates remain Milestone 9 work.
 
 The Vite development server proxies same-origin API paths to the backend. A separately hosted deployment must explicitly
 configure the API base URL and cross-origin policy. Live updates will use server-sent events unless bidirectional
@@ -111,6 +115,7 @@ local test results.
 - [Facility module](facility-module.md)
 - [Allocation domain](allocation-domain.md)
 - [Parking sessions](parking-sessions.md)
+- [Occupancy reporting](occupancy-reporting.md)
 - [API guide](../api/README.md)
 - [Frontend component standards](../frontend/component-standards.md)
 - [Persistence](persistence.md)

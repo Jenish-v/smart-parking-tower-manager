@@ -1,6 +1,7 @@
 package com.jenish.smartparking.parkingsession.web;
 
 import com.jenish.smartparking.allocation.domain.ParkingCapacityExceededException;
+import com.jenish.smartparking.facility.domain.FacilityNotFoundException;
 import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionExistsException;
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
@@ -109,6 +110,18 @@ public final class ApiExceptionHandler {
                 HttpStatus.CONFLICT,
                 "NO_COMPATIBLE_SPACE",
                 "No compatible parking space",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(FacilityNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleMissingFacility(
+            FacilityNotFoundException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.NOT_FOUND,
+                "FACILITY_NOT_FOUND",
+                "Facility not found",
                 exception.getMessage(),
                 request));
     }

@@ -45,6 +45,15 @@ curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e073
 Vehicle identifiers are normalized to uppercase with repeated whitespace collapsed. Required sizes are `SMALL`,
 `MEDIUM`, or `LARGE`.
 
+Occupancy returns current facility totals and a floor-by-floor breakdown:
+
+```bash
+curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/occupancy'
+```
+
+The response distinguishes total capacity, operational capacity, active occupancy, and currently available spaces. Its
+`capturedAt` value identifies when the point-in-time snapshot was read.
+
 ## Errors
 
 Errors use `application/problem+json`. Every problem includes the RFC problem fields plus:
@@ -53,7 +62,7 @@ Errors use `application/problem+json`. Every problem includes the RFC problem fi
 - `timestamp`: UTC failure time
 - `violations`: field validation details when applicable
 
-Current codes are `VALIDATION_FAILED`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`, `IDEMPOTENCY_CONFLICT`,
+Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`, `IDEMPOTENCY_CONFLICT`,
 `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and
 `INTERNAL_ERROR`.
 
