@@ -4,13 +4,26 @@ import { MemoryRouter } from 'react-router-dom'
 
 import { App } from './App'
 
+vi.mock('./api/parkingSessions', async (importOriginal) => ({
+  ...await importOriginal<typeof import('./api/parkingSessions')>(),
+  getOccupancy: vi.fn().mockResolvedValue({
+    facilityId: 'd936bb7d-3027-47aa-a47b-d04a37e07310',
+    capturedAt: '2026-08-21T22:30:00Z',
+    totalSpaces: 7200,
+    operationalSpaces: 7200,
+    occupiedSpaces: 0,
+    availableSpaces: 7200,
+    floors: [],
+  }),
+}))
+
 describe('operator application', () => {
-  it('renders the maintained facility model without claiming live occupancy', () => {
+  it('renders current occupancy for the maintained facility model', async () => {
     render(<MemoryRouter><App /></MemoryRouter>)
 
     expect(screen.getByRole('heading', { name: 'Reference tower' })).toBeInTheDocument()
-    expect(screen.getByText('7,200')).toBeInTheDocument()
-    expect(screen.getByText('API connection pending')).toBeInTheDocument()
+    expect(await screen.findAllByText('7,200')).toHaveLength(3)
+    expect(screen.getByText('Refreshes every 15 seconds')).toBeInTheDocument()
   })
 
   it('navigates to parking operations through the main layout', async () => {

@@ -162,6 +162,20 @@ h1 {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+.occupancy-actions { display: grid; gap: 0.6rem; justify-items: end; }
+.refresh-button {
+  min-height: 40px;
+  padding: 0.55rem 0.8rem;
+  color: white;
+  background: var(--forest);
+  border: 1px solid var(--forest);
+  font-weight: 700;
+  cursor: pointer;
+}
+.refresh-button:hover:not(:disabled) { background: #1c5145; }
+.refresh-button:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.refresh-button:disabled { cursor: not-allowed; opacity: 0.55; }
+.occupancy-feedback { max-width: 1100px; }
 
 .metric-grid {
   display: grid;
@@ -170,6 +184,7 @@ h1 {
   border: 1px solid var(--line);
   background: var(--paper);
 }
+.occupancy-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .metric-card { min-height: 170px; padding: 1.4rem; border-right: 1px solid var(--line); }
 .metric-card:last-child { border-right: 0; }
 .metric-label { margin: 0; color: var(--muted); font-size: 0.78rem; font-weight: 650; text-transform: uppercase; }
@@ -216,6 +231,14 @@ h1 {
   margin: 0;
   font: 500 0.72rem ui-monospace, SFMono-Regular, Consolas, monospace;
 }
+
+.occupancy-content { grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.8fr); }
+.floor-list { margin: 1.5rem 0 0; padding: 0; list-style: none; }
+.floor-list li { padding: 0.9rem 0; border-top: 1px solid var(--line); }
+.floor-summary { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.8rem; }
+.floor-summary span { color: var(--muted); }
+.occupancy-bar { height: 7px; margin-top: 0.65rem; overflow: hidden; background: #e1e5df; }
+.occupancy-bar span { display: block; height: 100%; background: #357968; }
 
 .empty-state {
   display: grid;
@@ -355,12 +378,14 @@ h1 {
   .main-content { padding: 2rem 1rem; }
   .page-header { display: block; }
   .page-actions { margin-top: 1.25rem; }
-  .metric-grid, .content-grid { grid-template-columns: 1fr; }
+  .metric-grid, .content-grid, .occupancy-metrics, .occupancy-content { grid-template-columns: 1fr; }
   .workflow-grid { grid-template-columns: 1fr; }
   .search-control { flex-direction: column; }
   .session-row { grid-template-columns: 1fr; }
   .metric-card { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
   .metric-card:last-child { border-bottom: 0; }
+  .occupancy-actions { justify-items: start; }
+  .floor-summary { align-items: flex-start; flex-direction: column; gap: 0.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

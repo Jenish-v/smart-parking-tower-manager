@@ -16,6 +16,24 @@ export interface ParkingSession {
   exitedAt: string | null
 }
 
+export interface OccupancySnapshot {
+  facilityId: string
+  capturedAt: string
+  totalSpaces: number
+  operationalSpaces: number
+  occupiedSpaces: number
+  availableSpaces: number
+  floors: FloorOccupancy[]
+}
+
+export interface FloorOccupancy {
+  floorNumber: number
+  totalSpaces: number
+  operationalSpaces: number
+  occupiedSpaces: number
+  availableSpaces: number
+}
+
 export interface ApiProblem {
   type: string
   title: string
@@ -100,5 +118,12 @@ export function listVehicleHistory(facilityId: string, vehicleIdentifier: string
   const query = new URLSearchParams({ vehicleIdentifier })
   return request<ParkingSession[]>(
     `/api/v1/facilities/${encodeURIComponent(facilityId)}/parking-sessions?${query.toString()}`,
+  )
+}
+
+export function getOccupancy(facilityId: string, signal?: AbortSignal) {
+  return request<OccupancySnapshot>(
+    `/api/v1/facilities/${encodeURIComponent(facilityId)}/occupancy`,
+    { signal },
   )
 }

@@ -8,5 +8,6 @@ reporting HTTP adapter consumes that interface and does not access allocation ta
 available space counts for the facility and each floor. Total capacity includes out-of-service spaces. Operational
 capacity excludes them, and availability is operational capacity minus active allocations.
 
-The snapshot is not an event stream. Clients must treat `capturedAt` as the freshness boundary. Server-sent updates and
-the dashboard refresh strategy remain part of the next live-occupancy slice.
+The snapshot is not an event stream. Clients must treat `capturedAt` as the freshness boundary. The dashboard requests
+a snapshot every 15 seconds while visible, refreshes immediately when visibility returns, and preserves the last
+successful snapshot after transient failures. Server-sent delivery remains part of the next live-occupancy slice.

@@ -37,9 +37,9 @@ the public API through a typed transport boundary.
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The dashboard presents configured reference values and supports parking entry, exit, and vehicle session search against
-the public API. The backend exposes point-in-time occupancy totals by floor; dashboard refresh and streaming updates
-remain planned. Reservations, pricing, identity, audit, and production deployment also remain planned. Session and
+The dashboard presents current facility and floor occupancy, with manual and 15-second refresh, and supports parking
+entry, exit, and vehicle session search against the public API. Server-sent occupancy updates remain planned.
+Reservations, pricing, identity, audit, and production deployment also remain planned. Session and
 idempotency history is retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
