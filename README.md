@@ -37,9 +37,9 @@ the public API through a typed transport boundary.
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
-The dashboard presents current facility and floor occupancy, with manual and 15-second refresh, and supports parking
-entry, exit, and vehicle session search against the public API. Server-sent occupancy updates remain planned.
-Reservations, pricing, identity, audit, and production deployment also remain planned. Session and
+The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
+fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. Reservations,
+pricing, identity, audit, and production deployment remain planned. Session and
 idempotency history is retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
@@ -115,6 +115,7 @@ See [frontend/README.md](frontend/README.md) for configuration and individual co
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions/active` | Find the active session |
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions` | List vehicle history |
 | GET | `/api/v1/facilities/{facilityId}/occupancy` | Get facility and floor occupancy snapshot |
+| GET | `/api/v1/facilities/{facilityId}/occupancy/stream` | Stream changed occupancy snapshots |
 
 Mutation requests require an `Idempotency-Key` header containing a UUID. For example:
 

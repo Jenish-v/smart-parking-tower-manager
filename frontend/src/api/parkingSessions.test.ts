@@ -1,4 +1,32 @@
-import { enterVehicle, findActiveSession, getOccupancy, listVehicleHistory } from './parkingSessions'
+import {
+  enterVehicle,
+  findActiveSession,
+  getOccupancy,
+  listVehicleHistory,
+  openOccupancyStream,
+  type OccupancySnapshot,
+} from './parkingSessions'
+
+class FakeEventSource {
+  static latest: FakeEventSource
+
+  readonly close = vi.fn()
+  readonly url: string
+  private readonly listeners = new Map<string, EventListener[]>()
+
+  constructor(url: string | URL) {
+    this.url = url.toString()
+    FakeEventSource.latest = this
+  }
+
+  addEventListener(type: string, listener: EventListener) {
+    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener])
+  }
+
+  emit(type: string, event: Event) {
+    this.listeners.get(type)?.forEach((listener) => listener(event))
+  }
+}
 
 describe('parking session API client', () => {
   it('encodes facility and vehicle identifiers for active lookup', async () => {
@@ -67,5 +95,34 @@ describe('parking session API client', () => {
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe('/api/v1/facilities/facility%2Fone/occupancy')
     expect(options?.signal).toBe(controller.signal)
+  })
+
+  it('opens and closes the facility occupancy stream', () => {
+    vi.stubGlobal('EventSource', FakeEventSource)
+    const onSnapshot = vi.fn()
+    const onConnectionChange = vi.fn()
+    const streamed: OccupancySnapshot = {
+      facilityId: 'facility-1',
+      capturedAt: '2026-08-22T22:00:00Z',
+      totalSpaces: 7200,
+      operationalSpaces: 7200,
+      occupiedSpaces: 1,
+      availableSpaces: 7199,
+      floors: [],
+    }
+
+    const close = openOccupancyStream('facility/one', onSnapshot, onConnectionChange)
+    FakeEventSource.latest.emit('open', new Event('open'))
+    FakeEventSource.latest.emit(
+      'occupancy',
+      new MessageEvent('occupancy', { data: JSON.stringify(streamed) }),
+    )
+
+    expect(FakeEventSource.latest.url).toBe('/api/v1/facilities/facility%2Fone/occupancy/stream')
+    expect(onConnectionChange).toHaveBeenCalledWith(true)
+    expect(onSnapshot).toHaveBeenCalledWith(streamed)
+    close()
+    expect(FakeEventSource.latest.close).toHaveBeenCalledOnce()
+    vi.unstubAllGlobals()
   })
 })

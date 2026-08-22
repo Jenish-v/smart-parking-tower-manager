@@ -75,9 +75,10 @@ pages own pending, success, empty, and failure states; presentation components d
 retries preserve their idempotency key until a command succeeds.
 
 The allocation application interface exposes point-in-time occupancy totals backed by PostgreSQL. The reporting HTTP
-adapter publishes facility and per-floor counts without reading another module's tables directly. The dashboard
-refreshes the snapshot every 15 seconds while visible, preserves the last successful response after a transient failure,
-and exposes a manual refresh control. Server-sent updates remain Milestone 9 work.
+adapter publishes facility and per-floor counts without reading another module's tables directly. A shared server-sent
+event broadcaster polls once per connected facility, emits only changed snapshots, and sends heartbeats between changes.
+The dashboard preserves the last successful response, falls back to 15-second polling while disconnected, and exposes a
+manual refresh control.
 
 The Vite development server proxies same-origin API paths to the backend. A separately hosted deployment must explicitly
 configure the API base URL and cross-origin policy. Live updates will use server-sent events unless bidirectional

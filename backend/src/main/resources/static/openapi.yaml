@@ -118,6 +118,24 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/facilities/{facilityId}/occupancy/stream:
+    get:
+      operationId: streamOccupancy
+      summary: Stream changed occupancy snapshots
+      description: Sends an initial occupancy event, changed snapshots, and keepalive comments.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Server-sent occupancy events
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OccupancySnapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   parameters:
     FacilityId:

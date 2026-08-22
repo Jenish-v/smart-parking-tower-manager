@@ -13,7 +13,8 @@ function utilization(occupied: number, operational: number) {
 }
 
 export function DashboardPage() {
-  const { snapshot, initialLoading, refreshing, error, refresh } = useOccupancy(referenceFacilityId)
+  const { snapshot, initialLoading, refreshing, error, streamConnected, refresh } =
+    useOccupancy(referenceFacilityId)
 
   const metrics = snapshot ? [
     { label: 'Available', value: snapshot.availableSpaces, detail: 'Operational and unoccupied' },
@@ -30,7 +31,9 @@ export function DashboardPage() {
         description="Current facility and floor occupancy from the parking service."
         actions={(
           <div className="occupancy-actions">
-            <span className="connection-badge">Refreshes every 15 seconds</span>
+            <span className={`connection-badge ${streamConnected ? 'connected' : ''}`}>
+              {streamConnected ? 'Live stream connected' : '15-second fallback active'}
+            </span>
             <button className="refresh-button" type="button" onClick={() => void refresh()} disabled={refreshing}>
               {refreshing ? 'Refreshing…' : 'Refresh now'}
             </button>
@@ -91,7 +94,7 @@ export function DashboardPage() {
                 <div><dt>Facility model</dt><dd><span className="status-dot" />Configured</dd></div>
                 <div><dt>Parking API</dt><dd>Available</dd></div>
                 <div><dt>Occupancy snapshot</dt><dd>Connected</dd></div>
-                <div><dt>Streaming</dt><dd>Not implemented</dd></div>
+                <div><dt>Streaming</dt><dd>{streamConnected ? 'Connected' : 'Reconnecting'}</dd></div>
                 <div><dt>Authentication</dt><dd>Not implemented</dd></div>
               </dl>
             </article>

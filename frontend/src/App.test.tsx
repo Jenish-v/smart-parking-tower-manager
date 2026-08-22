@@ -15,6 +15,7 @@ vi.mock('./api/parkingSessions', async (importOriginal) => ({
     availableSpaces: 7200,
     floors: [],
   }),
+  openOccupancyStream: vi.fn().mockReturnValue(vi.fn()),
 }))
 
 describe('operator application', () => {
@@ -23,7 +24,7 @@ describe('operator application', () => {
 
     expect(screen.getByRole('heading', { name: 'Reference tower' })).toBeInTheDocument()
     expect(await screen.findAllByText('7,200')).toHaveLength(3)
-    expect(screen.getByText('Refreshes every 15 seconds')).toBeInTheDocument()
+    expect(screen.getByText('15-second fallback active')).toBeInTheDocument()
   })
 
   it('navigates to parking operations through the main layout', async () => {

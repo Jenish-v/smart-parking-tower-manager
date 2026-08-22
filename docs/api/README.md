@@ -54,6 +54,13 @@ curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e073
 The response distinguishes total capacity, operational capacity, active occupancy, and currently available spaces. Its
 `capturedAt` value identifies when the point-in-time snapshot was read.
 
+The stream sends an initial named `occupancy` event, then sends another when counts change. Keepalive comments maintain
+idle connections. Browsers reconnect automatically after a stream interruption:
+
+```bash
+curl -N 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/occupancy/stream'
+```
+
 ## Errors
 
 Errors use `application/problem+json`. Every problem includes the RFC problem fields plus:
@@ -62,8 +69,8 @@ Errors use `application/problem+json`. Every problem includes the RFC problem fi
 - `timestamp`: UTC failure time
 - `violations`: field validation details when applicable
 
-Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`, `IDEMPOTENCY_CONFLICT`,
-`NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and
+Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`,
+`IDEMPOTENCY_CONFLICT`, `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and
 `INTERNAL_ERROR`.
 
 ## Security boundary

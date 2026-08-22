@@ -1,10 +1,17 @@
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { getOccupancy, type OccupancySnapshot } from '../api/parkingSessions'
+import {
+  getOccupancy,
+  openOccupancyStream,
+  type OccupancySnapshot,
+} from '../api/parkingSessions'
 import { DashboardPage } from './DashboardPage'
 
-vi.mock('../api/parkingSessions', () => ({ getOccupancy: vi.fn() }))
+vi.mock('../api/parkingSessions', () => ({
+  getOccupancy: vi.fn(),
+  openOccupancyStream: vi.fn(),
+}))
 
 const snapshot: OccupancySnapshot = {
   facilityId: 'd936bb7d-3027-47aa-a47b-d04a37e07310',
@@ -34,6 +41,7 @@ const snapshot: OccupancySnapshot = {
 describe('occupancy dashboard', () => {
   beforeEach(() => {
     vi.mocked(getOccupancy).mockReset().mockResolvedValue(snapshot)
+    vi.mocked(openOccupancyStream).mockReset().mockReturnValue(vi.fn())
   })
 
   it('renders current facility and floor occupancy', async () => {
@@ -75,5 +83,26 @@ describe('occupancy dashboard', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('applies streamed occupancy without waiting for fallback refresh', async () => {
+    let pushSnapshot: ((value: OccupancySnapshot) => void) | undefined
+    vi.mocked(openOccupancyStream).mockImplementation((_facilityId, onSnapshot, onConnectionChange) => {
+      pushSnapshot = onSnapshot
+      onConnectionChange(true)
+      return vi.fn()
+    })
+    render(<DashboardPage />)
+    await screen.findByText('7,196')
+
+    act(() => pushSnapshot?.({
+      ...snapshot,
+      capturedAt: '2026-08-22T22:31:00Z',
+      occupiedSpaces: 4,
+      availableSpaces: 7195,
+    }))
+
+    expect(screen.getByText('7,195')).toBeInTheDocument()
+    expect(screen.getByText('Live stream connected')).toBeInTheDocument()
   })
 })

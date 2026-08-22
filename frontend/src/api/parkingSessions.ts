@@ -127,3 +127,23 @@ export function getOccupancy(facilityId: string, signal?: AbortSignal) {
     { signal },
   )
 }
+
+export function openOccupancyStream(
+  facilityId: string,
+  onSnapshot: (snapshot: OccupancySnapshot) => void,
+  onConnectionChange: (connected: boolean) => void,
+) {
+  const path = `/api/v1/facilities/${encodeURIComponent(facilityId)}/occupancy/stream`
+  const source = new EventSource(`${configuredBaseUrl}${path}`)
+  source.addEventListener('occupancy', (event) => {
+    try {
+      onSnapshot(JSON.parse((event as MessageEvent<string>).data) as OccupancySnapshot)
+    } catch {
+      source.close()
+      onConnectionChange(false)
+    }
+  })
+  source.addEventListener('open', () => onConnectionChange(true))
+  source.addEventListener('error', () => onConnectionChange(false))
+  return () => source.close()
+}

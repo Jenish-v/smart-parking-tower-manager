@@ -41,8 +41,8 @@ mvn verify
 
 The build enforces the Java and Maven versions, runs Checkstyle, compiles the application, and runs the test suite.
 Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise HTTP validation, occupancy
-reporting, idempotent parking-session commands, and concurrent allocation against PostgreSQL. Testcontainers skips those tests when Docker is
-unavailable; continuous integration runs them with Docker available.
+reporting, server-sent delivery, idempotent parking-session commands, and concurrent allocation against PostgreSQL.
+Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run
 
@@ -60,6 +60,7 @@ GET  /actuator/health/liveness
 GET  /actuator/health/readiness
 GET  /openapi.yaml
 GET  /api/v1/facilities/{facilityId}/occupancy
+GET  /api/v1/facilities/{facilityId}/occupancy/stream
 POST /api/v1/facilities/{facilityId}/parking-sessions/entries
 POST /api/v1/facilities/{facilityId}/parking-sessions/exits
 GET  /api/v1/facilities/{facilityId}/parking-sessions/active?vehicleIdentifier={value}

@@ -2,8 +2,7 @@
 
 The operator dashboard is a React and TypeScript browser application. It provides a responsive application shell,
 reference-facility occupancy, parking entry and exit, and vehicle session search through the typed API client. Occupancy
-refreshes every 15 seconds while the page is visible and can also be refreshed manually. Streaming updates remain
-planned.
+uses a server-sent event stream, falls back to 15-second refresh while disconnected, and can be refreshed manually.
 
 ## Requirements
 

@@ -162,6 +162,7 @@ h1 {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+.connection-badge.connected { color: #27614f; background: #d9eee0; border-color: #9ac7aa; }
 .occupancy-actions { display: grid; gap: 0.6rem; justify-items: end; }
 .refresh-button {
   min-height: 40px;
