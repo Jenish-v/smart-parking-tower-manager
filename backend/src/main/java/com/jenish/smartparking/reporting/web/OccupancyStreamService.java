@@ -23,11 +23,15 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class OccupancyStreamService {
 
     private static final long REFRESH_SECONDS = 5;
+
     private static final long NO_TIMEOUT = 0L;
 
     private final OccupancyService occupancyService;
+
     private final ScheduledExecutorService scheduler;
+
     private final Supplier<SseEmitter> emitterFactory;
+
     private final Map<FacilityId, Channel> channels = new ConcurrentHashMap<>();
 
     @Autowired
@@ -142,6 +146,7 @@ public class OccupancyStreamService {
     private static final class Channel {
 
         private final Set<SseEmitter> emitters = new CopyOnWriteArraySet<>();
+
         private volatile OccupancySnapshot lastSnapshot;
 
         private Channel(OccupancySnapshot lastSnapshot) {

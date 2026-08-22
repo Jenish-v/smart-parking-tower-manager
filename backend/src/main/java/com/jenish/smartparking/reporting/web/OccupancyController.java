@@ -15,6 +15,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public final class OccupancyController {
 
     private final OccupancyService occupancyService;
+
     private final OccupancyStreamService occupancyStreamService;
 
     public OccupancyController(
