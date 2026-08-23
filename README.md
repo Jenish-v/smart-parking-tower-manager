@@ -1,9 +1,9 @@
 # Smart Parking Tower Manager
 
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
-facility. The implementation includes a Spring Boot backend, a React operator shell, facility, allocation, and
-parking-session modules, a versioned REST API, PostgreSQL persistence, Flyway migrations, and automated backend and
-frontend checks.
+facility. The implementation includes a Spring Boot backend, a React operator shell, facility, allocation,
+parking-session, and reservation-domain modules, a versioned REST API, PostgreSQL persistence, Flyway migrations, and
+automated backend and frontend checks.
 
 ## Reference facility
 
@@ -32,14 +32,16 @@ the public API through a typed transport boundary.
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
 | Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
+| Reservations | Arrival windows, lifecycle transitions, and vehicle arrival matching |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
-fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. Reservations,
-pricing, identity, audit, and production deployment remain planned. Session and
+fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. Reservation
+persistence, capacity protection, and API workflows remain planned, as do pricing, identity, audit, and production
+deployment. Session and
 idempotency history is retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
@@ -136,6 +138,7 @@ response, idempotency, and error behaviour.
 - [Facility module](docs/architecture/facility-module.md)
 - [Allocation domain](docs/architecture/allocation-domain.md)
 - [Parking sessions](docs/architecture/parking-sessions.md)
+- [Reservation domain](docs/architecture/reservation-domain.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)

@@ -46,8 +46,17 @@ Allocation candidates are ordered by floor number, zone code, and space number. 
 `FOR UPDATE SKIP LOCKED`; partial indexes enforce one active assignment and session per vehicle and space. PostgreSQL
 concurrency tests cover competing allocation and idempotent session requests.
 
-The framework-free `AllocationManager` continues to hold availability calculations and domain tests. Reservations
-remain a later milestone.
+The framework-free `AllocationManager` continues to hold availability calculations and domain tests.
+
+## Reservation workflow
+
+The reservation domain models a future capacity claim for one facility, vehicle, and required size. Confirmed
+reservations use half-open arrival windows: the start is eligible and the end is not. A confirmed reservation can be
+cancelled before its window ends, fulfilled by a matching arrival inside the window, or expired when the window ends.
+Terminal states cannot transition again.
+
+Reservation persistence, conflict protection, scheduled expiry, parking-session coordination, and public API workflows
+remain Milestone 10 work. The domain does not reserve or allocate a physical space.
 
 ## Data
 
@@ -117,6 +126,7 @@ local test results.
 - [Facility module](facility-module.md)
 - [Allocation domain](allocation-domain.md)
 - [Parking sessions](parking-sessions.md)
+- [Reservation domain](reservation-domain.md)
 - [Occupancy reporting](occupancy-reporting.md)
 - [API guide](../api/README.md)
 - [Frontend component standards](../frontend/component-standards.md)

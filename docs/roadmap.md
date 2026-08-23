@@ -6,7 +6,8 @@ maintained documentation agree.
 The project runs from August 10 through August 24, 2026. One day is reserved for integration and hardening without
 advancing the milestone number.
 
-Milestones 1 through 9 are implemented. The next milestone is reservations.
+Milestones 1 through 9 are implemented. Milestone 10 is in progress: reservation lifecycle, arrival windows, and vehicle
+matching are implemented in the domain; persistence, capacity protection, expiry execution, and API workflows remain.
 
 ## Milestone 1: Backend baseline
 

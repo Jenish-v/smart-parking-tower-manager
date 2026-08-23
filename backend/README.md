@@ -42,6 +42,7 @@ mvn verify
 The build enforces the Java and Maven versions, runs Checkstyle, compiles the application, and runs the test suite.
 Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise HTTP validation, occupancy
 reporting, server-sent delivery, idempotent parking-session commands, and concurrent allocation against PostgreSQL.
+The unit suite also covers reservation windows, lifecycle transitions, and arrival matching.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run
