@@ -29,6 +29,9 @@ Vite serves the dashboard on `http://localhost:5173` and proxies `/api` and `/op
 configured facility. Set `VITE_API_BASE_URL` only when the API is hosted on another origin; that deployment must also
 configure an appropriate cross-origin policy.
 
+The root `compose.yaml` builds the production frontend image, serves it through Nginx on `http://localhost:5173`, and
+proxies API, OpenAPI, and server-sent occupancy traffic to the backend service.
+
 ## Verification
 
 Run linting, component and client tests, TypeScript compilation, and the production build:

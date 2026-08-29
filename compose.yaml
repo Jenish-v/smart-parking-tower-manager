@@ -1,0 +1,53 @@
+name: smart-parking
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: smart_parking
+      POSTGRES_USER: smart_parking
+      POSTGRES_PASSWORD: smart_parking
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smart_parking -d smart_parking"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - smart-parking-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/smart_parking
+      DB_USERNAME: smart_parking
+      DB_PASSWORD: smart_parking
+      SPRING_PROFILES_ACTIVE: local
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    ports:
+      - "5173:80"
+
+volumes:
+  smart-parking-data:
