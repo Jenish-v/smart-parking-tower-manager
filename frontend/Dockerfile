@@ -9,6 +9,8 @@ RUN npm run build
 
 FROM nginx:1.28-alpine
 
+RUN apk add --no-cache curl
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/dist /usr/share/nginx/html
 
