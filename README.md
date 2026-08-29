@@ -68,6 +68,8 @@ docker compose up --build
 The operator dashboard is available at `http://localhost:5173`, the backend at `http://localhost:8080`, and the OpenAPI
 contract at `http://localhost:8080/openapi.yaml`. The local profile loads the deterministic 7,200-space reference
 facility. Stop the services with `docker compose down`. Add `--volumes` only when the local database should be erased.
+Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
+loads the operator dashboard before runtime changes can be merged.
 
 ## Backend setup
 
