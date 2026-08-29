@@ -36,6 +36,7 @@ the public API through a typed transport boundary.
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
+| Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
 | Operations | Health, liveness, readiness, graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
@@ -55,6 +56,20 @@ frontend/       React operator dashboard, typed API client, and component tests
 docs/           Architecture, API guidance, decisions, standards, and roadmap
 .github/        Continuous integration and repository templates
 ```
+
+## Run the complete local stack
+
+Docker Engine with Compose v2 is the only requirement for the maintained local runtime. From the repository root:
+
+```bash
+docker compose up --build
+```
+
+The operator dashboard is available at `http://localhost:5173`, the backend at `http://localhost:8080`, and the OpenAPI
+contract at `http://localhost:8080/openapi.yaml`. The local profile loads the deterministic 7,200-space reference
+facility. Stop the services with `docker compose down`. Add `--volumes` only when the local database should be erased.
+Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
+loads the operator dashboard before runtime changes can be merged.
 
 ## Backend setup
 

@@ -3,11 +3,12 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-The project runs from August 10 through August 24, 2026. One day is reserved for integration and hardening without
-advancing the milestone number.
-
 Milestones 1 through 9 are implemented. Milestone 10 is in progress: reservation lifecycle, arrival windows, and vehicle
 matching are implemented in the domain; persistence, capacity protection, expiry execution, and API workflows remain.
+
+The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
+operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria
+are satisfied; the roadmap has no calendar-based completion claim.
 
 ## Milestone 1: Backend baseline
 

@@ -28,6 +28,9 @@ Activate the `local` profile to also load the 7,200-space reference fixture:
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
+The maintained root `compose.yaml` activates this profile automatically and waits for PostgreSQL readiness before
+starting the service.
+
 The fixture creates six floors, zones A through F on each floor, and 200 spaces per zone. Each zone contains 100 small,
 80 medium, and 20 large spaces. The fixture is excluded from the default profile.
 
