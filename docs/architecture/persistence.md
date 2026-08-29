@@ -1,0 +1,46 @@
+# Persistence
+
+PostgreSQL is the system of record. Facility, allocation, and parking-session schemas are managed only through Flyway
+migrations.
+
+## Schema ownership
+
+| Module | Tables |
+| --- | --- |
+| Facility | `facilities`, `parking_floors`, `parking_zones`, `parking_spaces` |
+| Allocation | `active_allocations` |
+| Parking sessions | `parking_sessions`, `parking_session_requests` |
+
+The facility hierarchy stores configured space identity, size, and operational state. Natural identifiers are unique
+within their parent, and check constraints reproduce domain identifier and state rules.
+
+Allocation rows record vehicle-to-space assignment and release facts. Partial unique indexes prevent more than one
+active assignment for a vehicle within a facility or for a parking space.
+
+Parking-session rows record entry, active stay, and exit. They retain the allocated location as a lifecycle fact.
+Partial indexes prevent duplicate active vehicles and spaces. Request rows bind idempotency identifiers to operations
+and sessions.
+
+## Transactions and locking
+
+The allocation adapter selects a compatible `parking_spaces` row with
+`FOR UPDATE OF parking_spaces SKIP LOCKED`. Selection, insertion, and release execute within database transactions.
+The fixed floor, zone, and space ordering preserves deterministic selection among rows that are not already locked.
+Bounded retries rerun a complete allocation transaction after transient data-access failures.
+
+Parking-session entry and exit wrap calls to the allocation application interface in an outer transaction. Standard
+Spring transaction propagation makes session and allocation writes commit or roll back together. PostgreSQL advisory
+transaction locks serialize reuse of one request identifier without creating process-local coordination.
+
+See [ADR-0002](../decisions/0002-use-postgresql-row-locks-for-allocation.md) for the allocation locking decision.
+
+## Migrations
+
+Production schema migrations are under `backend/src/main/resources/db/migration`. They are immutable after release.
+
+Development fixtures are under `backend/src/main/resources/db/devdata` and load only with the Spring `local` profile.
+The reference fixture uses deterministic UUIDs and creates 7,200 active spaces across six floors and six zones per
+floor. Every zone has 100 small, 80 medium, and 20 large spaces.
+
+Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
+allocation concurrency, session transitions, request replay, rollback behaviour, and history.

@@ -1,0 +1,370 @@
+openapi: 3.0.3
+info:
+  title: Smart Parking Tower Manager API
+  version: 1.0.0
+  description: Versioned parking-session and occupancy reporting operations.
+servers:
+  - url: /
+paths:
+  /api/v1/facilities/{facilityId}/parking-sessions/entries:
+    post:
+      operationId: enterVehicle
+      summary: Start a parking session
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntryParkingSessionRequest'
+            example:
+              vehicleIdentifier: TOR 501
+              requiredSize: SMALL
+      responses:
+        '201':
+          description: Parking session started or matching entry request replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParkingSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/facilities/{facilityId}/parking-sessions/exits:
+    post:
+      operationId: exitVehicle
+      summary: Complete an active parking session
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExitParkingSessionRequest'
+            example:
+              vehicleIdentifier: TOR 501
+      responses:
+        '200':
+          description: Parking session completed or matching exit request replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParkingSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /api/v1/facilities/{facilityId}/parking-sessions/active:
+    get:
+      operationId: findActiveParkingSession
+      summary: Find a vehicle's active parking session
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/VehicleIdentifier'
+      responses:
+        '200':
+          description: Active parking session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParkingSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/facilities/{facilityId}/parking-sessions:
+    get:
+      operationId: listParkingSessionHistory
+      summary: List a vehicle's parking-session history
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/VehicleIdentifier'
+      responses:
+        '200':
+          description: Parking sessions ordered by newest entry first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParkingSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/facilities/{facilityId}/occupancy:
+    get:
+      operationId: getOccupancy
+      summary: Get a point-in-time occupancy snapshot
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Facility and floor occupancy counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OccupancySnapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/facilities/{facilityId}/occupancy/stream:
+    get:
+      operationId: streamOccupancy
+      summary: Stream changed occupancy snapshots
+      description: Sends an initial occupancy event, changed snapshots, and keepalive comments.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+      responses:
+        '200':
+          description: Server-sent occupancy events
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OccupancySnapshot'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  parameters:
+    FacilityId:
+      name: facilityId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID retained with the command result. Reuse only for an exact retry.
+      schema:
+        type: string
+        format: uuid
+    VehicleIdentifier:
+      name: vehicleIdentifier
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 32
+      example: TOR 501
+  schemas:
+    EntryParkingSessionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vehicleIdentifier
+        - requiredSize
+      properties:
+        vehicleIdentifier:
+          type: string
+          minLength: 1
+          maxLength: 32
+        requiredSize:
+          type: string
+          enum:
+            - SMALL
+            - MEDIUM
+            - LARGE
+    ExitParkingSessionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vehicleIdentifier
+      properties:
+        vehicleIdentifier:
+          type: string
+          minLength: 1
+          maxLength: 32
+    ParkingSession:
+      type: object
+      required:
+        - sessionId
+        - facilityId
+        - vehicleIdentifier
+        - requiredSize
+        - status
+        - space
+        - enteredAt
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        facilityId:
+          type: string
+          format: uuid
+        vehicleIdentifier:
+          type: string
+        requiredSize:
+          type: string
+          enum:
+            - SMALL
+            - MEDIUM
+            - LARGE
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - COMPLETED
+        space:
+          $ref: '#/components/schemas/Space'
+        enteredAt:
+          type: string
+          format: date-time
+        exitedAt:
+          type: string
+          format: date-time
+          nullable: true
+    Space:
+      type: object
+      required:
+        - floorNumber
+        - zoneCode
+        - spaceNumber
+      properties:
+        floorNumber:
+          type: integer
+          minimum: 1
+        zoneCode:
+          type: string
+        spaceNumber:
+          type: integer
+          minimum: 1
+    OccupancySnapshot:
+      type: object
+      required:
+        - facilityId
+        - capturedAt
+        - totalSpaces
+        - operationalSpaces
+        - occupiedSpaces
+        - availableSpaces
+        - floors
+      properties:
+        facilityId:
+          type: string
+          format: uuid
+        capturedAt:
+          type: string
+          format: date-time
+        totalSpaces:
+          type: integer
+          format: int64
+        operationalSpaces:
+          type: integer
+          format: int64
+        occupiedSpaces:
+          type: integer
+          format: int64
+        availableSpaces:
+          type: integer
+          format: int64
+        floors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FloorOccupancy'
+    FloorOccupancy:
+      type: object
+      required:
+        - floorNumber
+        - totalSpaces
+        - operationalSpaces
+        - occupiedSpaces
+        - availableSpaces
+      properties:
+        floorNumber:
+          type: integer
+          minimum: 1
+        totalSpaces:
+          type: integer
+          format: int64
+        operationalSpaces:
+          type: integer
+          format: int64
+        occupiedSpaces:
+          type: integer
+          format: int64
+        availableSpaces:
+          type: integer
+          format: int64
+    Problem:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - code
+        - timestamp
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        code:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+    Violation:
+      type: object
+      required:
+        - field
+        - message
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Request parsing or validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Requested facility or active parking session was not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Session state, capacity, or idempotency conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: Transient database failure
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
