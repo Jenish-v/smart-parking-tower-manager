@@ -18,6 +18,14 @@ Confirmed reservations have three terminal transitions:
 Arrival matching also requires the facility and normalized vehicle identifier to match. Terminal reservations never
 match another arrival and cannot transition again.
 
-This slice defines lifecycle invariants only. It does not persist reservations, claim capacity, run expiry jobs, or
-coordinate a matched arrival with parking-session entry. Those behaviours remain application and persistence work in
-Milestone 10.
+PostgreSQL persists reservations and serializes facility-scoped capacity decisions with a transaction advisory lock.
+The capacity check treats compatible spaces as nested pools: large claims consume large-only capacity, medium claims
+consume medium-or-large capacity, and all claims consume total compatible capacity. A sweep over existing window
+boundaries rejects any candidate that would exceed one of those pools.
+
+Creation uses a client-selected reservation UUID. Repeating an identical request returns the stored reservation;
+reusing the UUID for different facts returns a conflict. Cancellation is also repeat-safe. Read operations transition
+confirmed reservations whose windows have ended to `EXPIRED`; a scheduled expiry job is not yet implemented.
+
+The module does not reserve a physical space. Coordinating a matched arrival with parking-session entry and exposing
+reservation controls in the operator dashboard remain Milestone 10 work.

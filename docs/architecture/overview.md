@@ -55,8 +55,11 @@ reservations use half-open arrival windows: the start is eligible and the end is
 cancelled before its window ends, fulfilled by a matching arrival inside the window, or expired when the window ends.
 Terminal states cannot transition again.
 
-Reservation persistence, conflict protection, scheduled expiry, parking-session coordination, and public API workflows
-remain Milestone 10 work. The domain does not reserve or allocate a physical space.
+PostgreSQL persists reservations and serializes facility-scoped capacity decisions. Capacity checks protect nested
+size-compatible pools across every point in the requested window. The public API supports idempotent creation by a
+client-selected UUID, lookup, vehicle history, and repeat-safe cancellation. Expired reservations transition on access;
+a scheduled expiry job, parking-session coordination, and dashboard workflows remain Milestone 10 work. The domain does
+not reserve or allocate a physical space.
 
 ## Data
 
@@ -71,12 +74,13 @@ deletion policy for vehicle identifiers remains required before deployment.
 
 ## API and user interface
 
-The backend exposes versioned REST endpoints for entry, exit, active lookup, and vehicle history. The HTTP adapter calls
-the parking-session application interface and does not access persistence implementations. The OpenAPI 3.0 contract is
-served at `/openapi.yaml`.
+The backend exposes versioned REST endpoints for parking entry, exit, active lookup, vehicle history, occupancy, and
+reservation operations. HTTP adapters call application interfaces and do not access persistence implementations. The
+OpenAPI 3.0 contract is served at `/openapi.yaml`.
 
-Errors use RFC problem details with stable codes. Mutation commands require UUID idempotency keys. Request validation
-runs at the HTTP boundary before domain construction.
+Errors use RFC problem details with stable codes. Parking-session mutations require UUID idempotency headers;
+reservation creation uses the client-selected path UUID for replay protection. Request validation runs at the HTTP
+boundary before domain construction.
 
 The React and TypeScript application is a separate module that consumes only the public HTTP contract. It provides the
 responsive operator shell, entry and exit commands, and vehicle session search through a typed API client. Route-level

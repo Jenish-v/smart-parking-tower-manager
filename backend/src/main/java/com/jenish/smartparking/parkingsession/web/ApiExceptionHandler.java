@@ -5,6 +5,11 @@ import com.jenish.smartparking.facility.domain.FacilityNotFoundException;
 import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionExistsException;
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
+import com.jenish.smartparking.reservation.application.OverlappingVehicleReservationException;
+import com.jenish.smartparking.reservation.application.ReservationCapacityExceededException;
+import com.jenish.smartparking.reservation.application.ReservationIdentifierConflictException;
+import com.jenish.smartparking.reservation.application.ReservationNotFoundException;
+import com.jenish.smartparking.reservation.domain.InvalidReservationStateException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.time.Instant;
@@ -114,6 +119,54 @@ public final class ApiExceptionHandler {
                 request));
     }
 
+    @ExceptionHandler(ReservationCapacityExceededException.class)
+    public ResponseEntity<ProblemDetail> handleReservationCapacity(
+            ReservationCapacityExceededException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "RESERVATION_CAPACITY_EXCEEDED",
+                "Reservation capacity exceeded",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(OverlappingVehicleReservationException.class)
+    public ResponseEntity<ProblemDetail> handleOverlappingReservation(
+            OverlappingVehicleReservationException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "OVERLAPPING_VEHICLE_RESERVATION",
+                "Overlapping vehicle reservation",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(ReservationIdentifierConflictException.class)
+    public ResponseEntity<ProblemDetail> handleReservationIdentifierConflict(
+            ReservationIdentifierConflictException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "RESERVATION_IDENTIFIER_CONFLICT",
+                "Reservation identifier conflict",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(InvalidReservationStateException.class)
+    public ResponseEntity<ProblemDetail> handleReservationState(
+            InvalidReservationStateException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "INVALID_RESERVATION_STATE",
+                "Invalid reservation state",
+                exception.getMessage(),
+                request));
+    }
+
     @ExceptionHandler(FacilityNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleMissingFacility(
             FacilityNotFoundException exception,
@@ -134,6 +187,18 @@ public final class ApiExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "ACTIVE_SESSION_NOT_FOUND",
                 "Active parking session not found",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(ReservationNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleMissingReservation(
+            ReservationNotFoundException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.NOT_FOUND,
+                "RESERVATION_NOT_FOUND",
+                "Reservation not found",
                 exception.getMessage(),
                 request));
     }
