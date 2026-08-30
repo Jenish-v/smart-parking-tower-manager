@@ -44,8 +44,9 @@ mvn verify
 
 The build enforces the Java and Maven versions, runs Checkstyle, compiles the application, and runs the test suite.
 Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise HTTP validation, occupancy
-reporting, server-sent delivery, idempotent parking-session commands, and concurrent allocation against PostgreSQL.
-The unit suite also covers reservation windows, lifecycle transitions, and arrival matching.
+reporting, server-sent delivery, idempotent parking-session commands, concurrent allocation, and reservation capacity
+claims against PostgreSQL. The suite also covers reservation cancellation, expiry, lifecycle transitions, and arrival
+matching.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run
@@ -69,8 +70,13 @@ POST /api/v1/facilities/{facilityId}/parking-sessions/entries
 POST /api/v1/facilities/{facilityId}/parking-sessions/exits
 GET  /api/v1/facilities/{facilityId}/parking-sessions/active?vehicleIdentifier={value}
 GET  /api/v1/facilities/{facilityId}/parking-sessions?vehicleIdentifier={value}
+PUT  /api/v1/facilities/{facilityId}/reservations/{reservationId}
+GET  /api/v1/facilities/{facilityId}/reservations/{reservationId}
+DELETE /api/v1/facilities/{facilityId}/reservations/{reservationId}
+GET  /api/v1/facilities/{facilityId}/reservations?vehicleIdentifier={value}
 ```
 
-Mutation endpoints require a UUID `Idempotency-Key` header. Errors use `application/problem+json` and include a stable
-`code` property. The API currently has no authentication or authorization and must not be exposed as a production
-internet endpoint. Additional Actuator endpoints require an explicit architecture and security review.
+Parking-session mutations require a UUID `Idempotency-Key` header. Reservation creation uses a client-selected UUID in
+the path and safely replays an identical request. Errors use `application/problem+json` and include a stable `code`
+property. The API currently has no authentication or authorization and must not be exposed as a production internet
+endpoint. Additional Actuator endpoints require an explicit architecture and security review.

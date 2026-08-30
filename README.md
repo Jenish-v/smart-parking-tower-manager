@@ -32,7 +32,7 @@ the public API through a typed transport boundary.
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
 | Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
-| Reservations | Arrival windows, lifecycle transitions, and vehicle arrival matching |
+| Reservations | Persisted capacity claims, lifecycle transitions, expiry, and arrival matching |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
@@ -40,10 +40,11 @@ the public API through a typed transport boundary.
 | Operations | Health, liveness, readiness, graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
-fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. Reservation
-persistence, capacity protection, and API workflows remain planned, as do pricing, identity, audit, and production
-deployment. Session and
-idempotency history is retained without automated deletion until a production retention policy is approved.
+fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. The API can
+create, retrieve, list, and cancel reservations. PostgreSQL serializes capacity claims and protects the nested size
+pools. Dashboard reservation workflows and coordinated fulfillment during entry remain planned, as do pricing,
+identity, audit, and production deployment. Session and idempotency history is retained without automated deletion
+until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
 integration, not internet-facing production deployment.
@@ -133,8 +134,13 @@ See [frontend/README.md](frontend/README.md) for configuration and individual co
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions` | List vehicle history |
 | GET | `/api/v1/facilities/{facilityId}/occupancy` | Get facility and floor occupancy snapshot |
 | GET | `/api/v1/facilities/{facilityId}/occupancy/stream` | Stream changed occupancy snapshots |
+| PUT | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Create or replay a reservation |
+| GET | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Get a reservation |
+| DELETE | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Cancel or replay cancellation |
+| GET | `/api/v1/facilities/{facilityId}/reservations` | List reservation history for a vehicle |
 
-Mutation requests require an `Idempotency-Key` header containing a UUID. For example:
+Parking-session mutations require an `Idempotency-Key` header containing a UUID. Reservation creation uses the
+client-selected UUID in the request path as its replay key. For example:
 
 ```bash
 curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/entries \

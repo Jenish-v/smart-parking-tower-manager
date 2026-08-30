@@ -1,7 +1,7 @@
 # Persistence
 
-PostgreSQL is the system of record. Facility, allocation, and parking-session schemas are managed only through Flyway
-migrations.
+PostgreSQL is the system of record. Facility, allocation, parking-session, and reservation schemas are managed only
+through Flyway migrations.
 
 ## Schema ownership
 
@@ -10,6 +10,7 @@ migrations.
 | Facility | `facilities`, `parking_floors`, `parking_zones`, `parking_spaces` |
 | Allocation | `active_allocations` |
 | Parking sessions | `parking_sessions`, `parking_session_requests` |
+| Reservations | `reservations` |
 
 The facility hierarchy stores configured space identity, size, and operational state. Natural identifiers are unique
 within their parent, and check constraints reproduce domain identifier and state rules.
@@ -20,6 +21,10 @@ active assignment for a vehicle within a facility or for a parking space.
 Parking-session rows record entry, active stay, and exit. They retain the allocated location as a lifecycle fact.
 Partial indexes prevent duplicate active vehicles and spaces. Request rows bind idempotency identifiers to operations
 and sessions.
+
+Reservation rows record the vehicle, minimum size, half-open arrival window, lifecycle status, and terminal transition
+time. Indexes support confirmed-window capacity checks and vehicle history. Constraints reproduce the domain's size,
+status, identifier, window, and transition-time rules.
 
 ## Transactions and locking
 
@@ -32,6 +37,11 @@ Parking-session entry and exit wrap calls to the allocation application interfac
 Spring transaction propagation makes session and allocation writes commit or roll back together. PostgreSQL advisory
 transaction locks serialize reuse of one request identifier without creating process-local coordination.
 
+Reservation creation takes a facility-scoped advisory transaction lock before reading capacity and inserting the
+claim. This serializes competing decisions for one facility. The service checks peak overlap in the total,
+medium-or-large, and large-only compatible pools. Reservation UUIDs provide durable replay detection, and cancellation
+locks the selected row before applying a transition.
+
 See [ADR-0002](../decisions/0002-use-postgresql-row-locks-for-allocation.md) for the allocation locking decision.
 
 ## Migrations
@@ -43,4 +53,5 @@ The reference fixture uses deterministic UUIDs and creates 7,200 active spaces a
 floor. Every zone has 100 small, 80 medium, and 20 large spaces.
 
 Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
-allocation concurrency, session transitions, request replay, rollback behaviour, and history.
+allocation concurrency, session transitions, request replay, rollback behaviour, reservation capacity concurrency,
+cancellation, expiry, and history.

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Smart Parking Tower Manager API
   version: 1.0.0
-  description: Versioned parking-session and occupancy reporting operations.
+  description: Versioned parking-session, reservation, and occupancy reporting operations.
 servers:
   - url: /
 paths:
@@ -101,6 +101,85 @@ paths:
                   $ref: '#/components/schemas/ParkingSession'
         '400':
           $ref: '#/components/responses/BadRequest'
+  /api/v1/facilities/{facilityId}/reservations/{reservationId}:
+    put:
+      operationId: createReservation
+      summary: Create or replay a reservation
+      description: The client-selected reservation identifier makes an exact retry idempotent.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/ReservationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reservation created or matching request replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    get:
+      operationId: findReservation
+      summary: Find a reservation
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '200':
+          description: Reservation state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: cancelReservation
+      summary: Cancel a confirmed reservation
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/ReservationId'
+      responses:
+        '200':
+          description: Cancelled reservation or matching cancellation replay
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/v1/facilities/{facilityId}/reservations:
+    get:
+      operationId: listVehicleReservations
+      summary: List a vehicle's reservation history
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/VehicleIdentifier'
+      responses:
+        '200':
+          description: Reservations ordered by newest creation first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reservation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/v1/facilities/{facilityId}/occupancy:
     get:
       operationId: getOccupancy
@@ -153,6 +232,14 @@ components:
       schema:
         type: string
         format: uuid
+    ReservationId:
+      name: reservationId
+      in: path
+      required: true
+      description: Client-selected UUID used to replay an exact create request safely.
+      schema:
+        type: string
+        format: uuid
     VehicleIdentifier:
       name: vehicleIdentifier
       in: query
@@ -190,6 +277,77 @@ components:
           type: string
           minLength: 1
           maxLength: 32
+    CreateReservationRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - vehicleIdentifier
+        - requiredSize
+        - startsAt
+        - endsAt
+      properties:
+        vehicleIdentifier:
+          type: string
+          minLength: 1
+          maxLength: 32
+        requiredSize:
+          type: string
+          enum:
+            - SMALL
+            - MEDIUM
+            - LARGE
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+    Reservation:
+      type: object
+      required:
+        - reservationId
+        - facilityId
+        - vehicleIdentifier
+        - requiredSize
+        - startsAt
+        - endsAt
+        - createdAt
+        - status
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        facilityId:
+          type: string
+          format: uuid
+        vehicleIdentifier:
+          type: string
+        requiredSize:
+          type: string
+          enum:
+            - SMALL
+            - MEDIUM
+            - LARGE
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - CONFIRMED
+            - CANCELLED
+            - FULFILLED
+            - EXPIRED
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
     ParkingSession:
       type: object
       required:
@@ -351,13 +509,13 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     NotFound:
-      description: Requested facility or active parking session was not found
+      description: Requested facility, parking session, or reservation was not found
       content:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
     Conflict:
-      description: Session state, capacity, or idempotency conflict
+      description: Session, reservation state, capacity, or idempotency conflict
       content:
         application/problem+json:
           schema:
