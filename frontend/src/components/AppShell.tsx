@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const navigation = [
   { to: '/', label: 'Overview', end: true },
   { to: '/operations', label: 'Parking operations' },
+  { to: '/reservations', label: 'Reservations' },
   { to: '/sessions', label: 'Session search' },
 ]
 

@@ -21,6 +21,10 @@ Views must distinguish configured reference values from live API data. Do not re
 service-health values. A mutation must expose pending, success, retry-safe failure, and validation states before its
 control is enabled for operators.
 
+Time-bound forms use native date and time controls and send UTC instants to the API. A reservation retry keeps its
+client-selected identifier until the matching command succeeds. Cancellation updates the returned reservation in place
+instead of predicting a terminal state in the browser.
+
 ## Testing
 
 Component tests assert user-observable behaviour through roles, names, and content. API client tests verify URL

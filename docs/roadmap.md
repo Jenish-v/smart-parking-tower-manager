@@ -4,8 +4,8 @@ Work is delivered as reviewable vertical slices. A milestone is complete only wh
 maintained documentation agree.
 
 Milestones 1 through 9 are implemented. Milestone 10 is in progress: reservation lifecycle, PostgreSQL persistence,
-compatible-capacity protection, expiry on access, cancellation, and API workflows are implemented. Coordinated
-parking-session fulfillment and dashboard workflows remain.
+compatible-capacity protection, expiry on access, cancellation, API workflows, and operator dashboard workflows are
+implemented. Coordinated parking-session fulfillment remains.
 
 The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
 operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria

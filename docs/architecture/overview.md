@@ -83,9 +83,10 @@ reservation creation uses the client-selected path UUID for replay protection. R
 boundary before domain construction.
 
 The React and TypeScript application is a separate module that consumes only the public HTTP contract. It provides the
-responsive operator shell, entry and exit commands, and vehicle session search through a typed API client. Route-level
-pages own pending, success, empty, and failure states; presentation components do not call `fetch` directly. Mutation
-retries preserve their idempotency key until a command succeeds.
+responsive operator shell, entry and exit commands, vehicle session search, and reservation creation, history, and
+cancellation through typed API clients. Route-level pages own pending, success, empty, and failure states; presentation
+components do not call `fetch` directly. Mutation retries preserve their parking-session idempotency key or
+reservation identifier until a command succeeds.
 
 The allocation application interface exposes point-in-time occupancy totals backed by PostgreSQL. The reporting HTTP
 adapter publishes facility and per-floor counts without reading another module's tables directly. A shared server-sent
