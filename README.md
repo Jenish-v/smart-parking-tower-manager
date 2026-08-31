@@ -40,11 +40,11 @@ the public API through a typed transport boundary.
 | Operations | Health, liveness, readiness, graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
-fallback polling. It also supports parking entry, exit, and vehicle session search against the public API. The API can
-create, retrieve, list, and cancel reservations. PostgreSQL serializes capacity claims and protects the nested size
-pools. Dashboard reservation workflows and coordinated fulfillment during entry remain planned, as do pricing,
-identity, audit, and production deployment. Session and idempotency history is retained without automated deletion
-until a production retention policy is approved.
+fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
+cancellation against the public API. PostgreSQL serializes reservation capacity claims and protects the nested size
+pools. Coordinated reservation fulfillment during parking entry remains planned, as do pricing, identity, audit, and
+production deployment. Session and idempotency history is retained without automated deletion until a production
+retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
 integration, not internet-facing production deployment.
