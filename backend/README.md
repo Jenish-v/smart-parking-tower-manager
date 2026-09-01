@@ -46,7 +46,7 @@ The build enforces the Java and Maven versions, runs Checkstyle, compiles the ap
 Docker-backed tests apply all Flyway migrations, load the reference fixture, and exercise HTTP validation, occupancy
 reporting, server-sent delivery, idempotent parking-session commands, concurrent allocation, and reservation capacity
 claims against PostgreSQL. The suite also covers reservation cancellation, expiry, lifecycle transitions, and arrival
-matching.
+matching, including rollback when a matched arrival cannot obtain a space.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run

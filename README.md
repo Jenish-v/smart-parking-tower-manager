@@ -16,8 +16,9 @@ The maintained fixture contains:
 - 100 small, 80 medium, and 20 large spaces per zone
 
 Allocation selects the lowest compatible floor, then the first zone alphabetically, then the lowest space number. Entry
-and exit commands atomically coordinate parking sessions with allocation. Request identifiers make command retries
-idempotent, while PostgreSQL constraints and row locks protect active vehicles and spaces under concurrency.
+and exit commands atomically coordinate parking sessions with allocation. Entry also fulfills and links a matching
+reservation inside its arrival window. Request identifiers make command retries idempotent, while PostgreSQL constraints
+and row locks protect active vehicles and spaces under concurrency.
 
 ## Architecture
 
@@ -32,7 +33,7 @@ the public API through a typed transport boundary.
 | Facility domain | Facilities, floors, zones, spaces, compatibility, operational state |
 | Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
-| Reservations | Persisted capacity claims, lifecycle transitions, expiry, and arrival matching |
+| Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
@@ -41,10 +42,10 @@ the public API through a typed transport boundary.
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
-cancellation against the public API. PostgreSQL serializes reservation capacity claims and protects the nested size
-pools. Coordinated reservation fulfillment during parking entry remains planned, as do pricing, identity, audit, and
-production deployment. Session and idempotency history is retained without automated deletion until a production
-retention policy is approved.
+cancellation against the public API. PostgreSQL serializes reservation capacity claims, protects nested size pools, and
+atomically fulfills a matching claim during parking entry. Pricing, identity, audit, and production deployment remain
+planned. Session and idempotency history is retained without automated deletion until a production retention policy is
+approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
 integration, not internet-facing production deployment.

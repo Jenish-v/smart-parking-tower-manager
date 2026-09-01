@@ -18,6 +18,7 @@ export interface ParkingSession {
   status: SessionStatus
   enteredAt: string
   exitedAt: string | null
+  reservationId: string | null
 }
 
 export interface OccupancySnapshot {

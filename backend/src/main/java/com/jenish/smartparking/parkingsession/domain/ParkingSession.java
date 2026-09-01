@@ -4,6 +4,7 @@ import com.jenish.smartparking.allocation.domain.SpaceLocation;
 import com.jenish.smartparking.allocation.domain.VehicleIdentifier;
 import com.jenish.smartparking.facility.domain.FacilityId;
 import com.jenish.smartparking.facility.domain.SizeClass;
+import com.jenish.smartparking.reservation.domain.ReservationId;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -14,7 +15,8 @@ public record ParkingSession(
         SizeClass requiredSize,
         SpaceLocation spaceLocation,
         Instant enteredAt,
-        Instant exitedAt) {
+        Instant exitedAt,
+        ReservationId reservationId) {
 
     public ParkingSession {
         Objects.requireNonNull(id, "id must not be null");
@@ -38,6 +40,17 @@ public record ParkingSession(
             SizeClass requiredSize,
             SpaceLocation spaceLocation,
             Instant enteredAt) {
+        return start(id, facilityId, vehicleIdentifier, requiredSize, spaceLocation, enteredAt, null);
+    }
+
+    public static ParkingSession start(
+            SessionId id,
+            FacilityId facilityId,
+            VehicleIdentifier vehicleIdentifier,
+            SizeClass requiredSize,
+            SpaceLocation spaceLocation,
+            Instant enteredAt,
+            ReservationId reservationId) {
         return new ParkingSession(
                 id,
                 facilityId,
@@ -45,7 +58,8 @@ public record ParkingSession(
                 requiredSize,
                 spaceLocation,
                 enteredAt,
-                null);
+                null,
+                reservationId);
     }
 
     public ParkingSession complete(Instant completedAt) {
@@ -63,7 +77,8 @@ public record ParkingSession(
                 requiredSize,
                 spaceLocation,
                 enteredAt,
-                completedAt);
+                completedAt,
+                reservationId);
     }
 
     public ParkingSessionStatus status() {

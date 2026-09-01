@@ -18,6 +18,7 @@ const activeSession = {
   space: { floorNumber: 1, zoneCode: 'A', spaceNumber: 7 },
   enteredAt: '2026-08-19T20:00:00Z',
   exitedAt: null,
+  reservationId: 'reservation-1',
 }
 
 describe('parking operations', () => {
@@ -35,6 +36,7 @@ describe('parking operations', () => {
 
     expect(await screen.findByText('Entry recorded')).toBeInTheDocument()
     expect(screen.getByText('Floor 1 · Zone A · Space 7')).toBeInTheDocument()
+    expect(screen.getByText('Reservation reservation-1')).toBeInTheDocument()
     expect(enterVehicle).toHaveBeenCalledWith(
       'd936bb7d-3027-47aa-a47b-d04a37e07310',
       { vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL' },

@@ -13,6 +13,7 @@ export function SessionResult({ session, message }: SessionResultProps) {
         Floor {session.space.floorNumber} · Zone {session.space.zoneCode} · Space {session.space.spaceNumber}
       </p>
       <p className="result-meta">Vehicle {session.vehicleIdentifier} · {session.requiredSize.toLowerCase()} space</p>
+      {session.reservationId && <p className="result-meta">Reservation {session.reservationId}</p>}
     </div>
   )
 }

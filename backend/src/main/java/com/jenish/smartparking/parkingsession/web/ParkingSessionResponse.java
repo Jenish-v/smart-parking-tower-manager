@@ -12,7 +12,8 @@ public record ParkingSessionResponse(
         String status,
         SpaceResponse space,
         Instant enteredAt,
-        Instant exitedAt) {
+        Instant exitedAt,
+        UUID reservationId) {
 
     public static ParkingSessionResponse from(ParkingSession session) {
         return new ParkingSessionResponse(
@@ -26,7 +27,8 @@ public record ParkingSessionResponse(
                         session.spaceLocation().zoneCode().value(),
                         session.spaceLocation().spaceNumber().value()),
                 session.enteredAt(),
-                session.exitedAt());
+                session.exitedAt(),
+                session.reservationId() == null ? null : session.reservationId().value());
     }
 
     public record SpaceResponse(

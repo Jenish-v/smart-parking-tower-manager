@@ -27,5 +27,9 @@ Creation uses a client-selected reservation UUID. Repeating an identical request
 reusing the UUID for different facts returns a conflict. Cancellation is also repeat-safe. Read operations transition
 confirmed reservations whose windows have ended to `EXPIRED`; a scheduled expiry job is not yet implemented.
 
-The module does not reserve a physical space. Coordinating a matched arrival with parking-session entry and exposing
-reservation controls in the operator dashboard remain Milestone 10 work.
+Parking entry asks the reservation application interface for a matching confirmed claim. The adapter row-locks that
+claim, requires the arrival size to match, and transitions it to `FULFILLED` in the parking-session transaction. The
+session retains the reservation identifier. Allocation failure rolls back both the transition and session work.
+
+The module does not reserve a physical space. A scheduled expiry job is deferred to operational hardening; expiry on
+access preserves correct public state in the current release.

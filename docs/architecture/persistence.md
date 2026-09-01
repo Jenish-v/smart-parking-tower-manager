@@ -18,9 +18,10 @@ within their parent, and check constraints reproduce domain identifier and state
 Allocation rows record vehicle-to-space assignment and release facts. Partial unique indexes prevent more than one
 active assignment for a vehicle within a facility or for a parking space.
 
-Parking-session rows record entry, active stay, and exit. They retain the allocated location as a lifecycle fact.
-Partial indexes prevent duplicate active vehicles and spaces. Request rows bind idempotency identifiers to operations
-and sessions.
+Parking-session rows record entry, active stay, and exit. They retain the allocated location and optional fulfilled
+reservation identifier as lifecycle facts. Partial indexes prevent duplicate active vehicles and spaces, while a unique
+index prevents one reservation from being linked to two sessions. Request rows bind idempotency identifiers to
+operations and sessions.
 
 Reservation rows record the vehicle, minimum size, half-open arrival window, lifecycle status, and terminal transition
 time. Indexes support confirmed-window capacity checks and vehicle history. Constraints reproduce the domain's size,
@@ -34,8 +35,9 @@ The fixed floor, zone, and space ordering preserves deterministic selection amon
 Bounded retries rerun a complete allocation transaction after transient data-access failures.
 
 Parking-session entry and exit wrap calls to the allocation application interface in an outer transaction. Standard
-Spring transaction propagation makes session and allocation writes commit or roll back together. PostgreSQL advisory
-transaction locks serialize reuse of one request identifier without creating process-local coordination.
+Spring transaction propagation makes session, allocation, and matched-reservation writes commit or roll back together.
+PostgreSQL advisory transaction locks serialize reuse of one request identifier without creating process-local
+coordination. A matched reservation is row-locked before its fulfillment transition.
 
 Reservation creation takes a facility-scoped advisory transaction lock before reading capacity and inserting the
 claim. This serializes competing decisions for one facility. The service checks peak overlap in the total,
@@ -54,4 +56,4 @@ floor. Every zone has 100 small, 80 medium, and 20 large spaces.
 
 Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
 allocation concurrency, session transitions, request replay, rollback behaviour, reservation capacity concurrency,
-cancellation, expiry, and history.
+cancellation, expiry, arrival fulfillment, and history.

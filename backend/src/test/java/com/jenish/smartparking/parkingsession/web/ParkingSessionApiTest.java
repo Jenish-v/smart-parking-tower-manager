@@ -7,6 +7,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +48,7 @@ class ParkingSessionApiTest {
     void resetData() {
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();
+        jdbcClient.sql("DELETE FROM reservations").update();
         jdbcClient.sql("DELETE FROM active_allocations").update();
         jdbcClient.sql("UPDATE parking_spaces SET operational_state = 'OUT_OF_SERVICE'").update();
     }
@@ -128,6 +133,28 @@ class ParkingSessionApiTest {
     }
 
     @Test
+    void fulfillsAReservationThroughTheEntryEndpoint() throws Exception {
+        activateSpace(1, "A", 1);
+        UUID reservationId = insertConfirmedReservation("TOR 504", "SMALL");
+
+        HttpResponse<String> entered = post(
+                "/entries",
+                UUID.randomUUID(),
+                """
+                {"vehicleIdentifier":"TOR 504","requiredSize":"SMALL"}
+                """);
+
+        assertEquals(201, entered.statusCode());
+        assertTrue(entered.body().contains("\"reservationId\":\"" + reservationId + "\""));
+        assertEquals(
+                "FULFILLED",
+                jdbcClient.sql("SELECT status FROM reservations WHERE id = :id")
+                        .param("id", reservationId)
+                        .query(String.class)
+                        .single());
+    }
+
+    @Test
     void publishesTheOpenApiContract() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(uri("/openapi.yaml")).GET().build();
 
@@ -191,5 +218,34 @@ class ParkingSessionApiTest {
                 .param("spaceNumber", spaceNumber)
                 .update();
         assertEquals(1, changed);
+    }
+
+    private UUID insertConfirmedReservation(String vehicleIdentifier, String requiredSize) {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        UUID reservationId = UUID.randomUUID();
+        jdbcClient.sql("""
+                INSERT INTO reservations (
+                    id, facility_id, vehicle_identifier, required_size,
+                    starts_at, ends_at, created_at, status
+                ) VALUES (
+                    :id, :facilityId, :vehicleIdentifier, :requiredSize,
+                    :startsAt, :endsAt, :createdAt, 'CONFIRMED'
+                )
+                """)
+                .param("id", reservationId)
+                .param("facilityId", FACILITY_ID)
+                .param("vehicleIdentifier", vehicleIdentifier)
+                .param("requiredSize", requiredSize)
+                .param("startsAt", OffsetDateTime.ofInstant(
+                        now.minus(5, ChronoUnit.MINUTES),
+                        ZoneOffset.UTC))
+                .param("endsAt", OffsetDateTime.ofInstant(
+                        now.plus(1, ChronoUnit.HOURS),
+                        ZoneOffset.UTC))
+                .param("createdAt", OffsetDateTime.ofInstant(
+                        now.minus(10, ChronoUnit.MINUTES),
+                        ZoneOffset.UTC))
+                .update();
+        return reservationId;
     }
 }

@@ -15,6 +15,12 @@ import com.jenish.smartparking.parkingsession.application.ParkingSessionService;
 import com.jenish.smartparking.parkingsession.domain.ParkingSession;
 import com.jenish.smartparking.parkingsession.domain.ParkingSessionStatus;
 import com.jenish.smartparking.parkingsession.domain.RequestId;
+import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
+import com.jenish.smartparking.reservation.domain.ReservationId;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -54,6 +60,7 @@ class JdbcParkingSessionServiceTest {
     void resetSessionsAndCapacity() {
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();
+        jdbcClient.sql("DELETE FROM reservations").update();
         jdbcClient.sql("DELETE FROM active_allocations").update();
         jdbcClient.sql("UPDATE parking_spaces SET operational_state = 'OUT_OF_SERVICE'").update();
     }
@@ -150,6 +157,59 @@ class JdbcParkingSessionServiceTest {
         assertEquals(0L, countActiveAllocations());
     }
 
+    @Test
+    void fulfillsMatchingReservationAndLinksItToTheSession() {
+        activateSpace(1, "A", 1);
+        VehicleIdentifier vehicle = new VehicleIdentifier("reserved vehicle");
+        ReservationId reservationId = insertConfirmedReservation(vehicle, SizeClass.SMALL);
+
+        ParkingSession entered = sessionService.enter(
+                RequestId.newId(),
+                FACILITY_ID,
+                vehicle,
+                SizeClass.SMALL);
+
+        assertEquals(reservationId, entered.reservationId());
+        assertEquals("FULFILLED", reservationStatus(reservationId));
+        assertEquals(entered.enteredAt(), reservationResolvedAt(reservationId));
+    }
+
+    @Test
+    void rollsBackFulfillmentWhenSpaceAllocationFails() {
+        VehicleIdentifier vehicle = new VehicleIdentifier("reserved no space");
+        ReservationId reservationId = insertConfirmedReservation(vehicle, SizeClass.SMALL);
+
+        assertThrows(
+                ParkingCapacityExceededException.class,
+                () -> sessionService.enter(
+                        RequestId.newId(),
+                        FACILITY_ID,
+                        vehicle,
+                        SizeClass.SMALL));
+
+        assertEquals("CONFIRMED", reservationStatus(reservationId));
+        assertEquals(0L, count("parking_sessions"));
+    }
+
+    @Test
+    void rejectsAnArrivalThatDoesNotMatchTheReservedSize() {
+        activateSpace(1, "A", 1);
+        VehicleIdentifier vehicle = new VehicleIdentifier("wrong size");
+        ReservationId reservationId = insertConfirmedReservation(vehicle, SizeClass.MEDIUM);
+
+        assertThrows(
+                ReservationArrivalSizeMismatchException.class,
+                () -> sessionService.enter(
+                        RequestId.newId(),
+                        FACILITY_ID,
+                        vehicle,
+                        SizeClass.SMALL));
+
+        assertEquals("CONFIRMED", reservationStatus(reservationId));
+        assertEquals(0L, count("parking_sessions"));
+        assertEquals(0L, countActiveAllocations());
+    }
+
     private List<ParkingSession> runConcurrently(
             Callable<ParkingSession> first,
             Callable<ParkingSession> second) throws Exception {
@@ -197,6 +257,50 @@ class JdbcParkingSessionServiceTest {
                 .param("spaceNumber", spaceNumber)
                 .update();
         assertEquals(1, changed);
+    }
+
+    private ReservationId insertConfirmedReservation(
+            VehicleIdentifier vehicleIdentifier,
+            SizeClass requiredSize) {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        ReservationId reservationId = ReservationId.newId();
+        jdbcClient.sql("""
+                INSERT INTO reservations (
+                    id, facility_id, vehicle_identifier, required_size,
+                    starts_at, ends_at, created_at, status
+                ) VALUES (
+                    :id, :facilityId, :vehicleIdentifier, :requiredSize,
+                    :startsAt, :endsAt, :createdAt, 'CONFIRMED'
+                )
+                """)
+                .param("id", reservationId.value())
+                .param("facilityId", FACILITY_ID.value())
+                .param("vehicleIdentifier", vehicleIdentifier.value())
+                .param("requiredSize", requiredSize.name())
+                .param("startsAt", databaseTime(now.minus(5, ChronoUnit.MINUTES)))
+                .param("endsAt", databaseTime(now.plus(1, ChronoUnit.HOURS)))
+                .param("createdAt", databaseTime(now.minus(10, ChronoUnit.MINUTES)))
+                .update();
+        return reservationId;
+    }
+
+    private String reservationStatus(ReservationId reservationId) {
+        return jdbcClient.sql("SELECT status FROM reservations WHERE id = :id")
+                .param("id", reservationId.value())
+                .query(String.class)
+                .single();
+    }
+
+    private Instant reservationResolvedAt(ReservationId reservationId) {
+        return jdbcClient.sql("SELECT resolved_at FROM reservations WHERE id = :id")
+                .param("id", reservationId.value())
+                .query(OffsetDateTime.class)
+                .single()
+                .toInstant();
+    }
+
+    private OffsetDateTime databaseTime(Instant instant) {
+        return OffsetDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 
     private long count(String table) {
