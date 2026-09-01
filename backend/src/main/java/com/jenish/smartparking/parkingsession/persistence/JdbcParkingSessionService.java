@@ -17,6 +17,9 @@ import com.jenish.smartparking.parkingsession.application.ParkingSessionService;
 import com.jenish.smartparking.parkingsession.domain.ParkingSession;
 import com.jenish.smartparking.parkingsession.domain.RequestId;
 import com.jenish.smartparking.parkingsession.domain.SessionId;
+import com.jenish.smartparking.reservation.application.ReservationService;
+import com.jenish.smartparking.reservation.domain.Reservation;
+import com.jenish.smartparking.reservation.domain.ReservationId;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -49,7 +52,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                    ps.zone_code,
                    ps.space_number,
                    ps.entered_at,
-                   ps.exited_at
+                   ps.exited_at,
+                   ps.reservation_id
             FROM parking_sessions ps
             """;
 
@@ -72,7 +76,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                    ps.zone_code,
                    ps.space_number,
                    ps.entered_at,
-                   ps.exited_at
+                   ps.exited_at,
+                   ps.reservation_id
             FROM parking_session_requests pr
             JOIN parking_sessions ps ON ps.id = pr.session_id
             WHERE pr.request_id = :requestId
@@ -82,6 +87,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
 
     private final AllocationService allocationService;
 
+    private final ReservationService reservationService;
+
     private final TransactionOperations transactions;
 
     private final Clock clock;
@@ -90,17 +97,25 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
     public JdbcParkingSessionService(
             JdbcClient jdbcClient,
             AllocationService allocationService,
+            ReservationService reservationService,
             PlatformTransactionManager transactionManager) {
-        this(jdbcClient, allocationService, new TransactionTemplate(transactionManager), Clock.systemUTC());
+        this(
+                jdbcClient,
+                allocationService,
+                reservationService,
+                new TransactionTemplate(transactionManager),
+                Clock.systemUTC());
     }
 
     JdbcParkingSessionService(
             JdbcClient jdbcClient,
             AllocationService allocationService,
+            ReservationService reservationService,
             TransactionOperations transactions,
             Clock clock) {
         this.jdbcClient = Objects.requireNonNull(jdbcClient, "jdbcClient must not be null");
         this.allocationService = Objects.requireNonNull(allocationService, "allocationService must not be null");
+        this.reservationService = Objects.requireNonNull(reservationService, "reservationService must not be null");
         this.transactions = Objects.requireNonNull(transactions, "transactions must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
@@ -165,6 +180,12 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
             throw new ActiveParkingSessionExistsException(vehicleIdentifier);
         }
 
+        Instant enteredAt = now();
+        Optional<Reservation> reservation = reservationService.fulfillArrival(
+                facilityId,
+                vehicleIdentifier,
+                requiredSize,
+                enteredAt);
         ParkingAllocation allocation;
         try {
             allocation = allocationService.park(facilityId, vehicleIdentifier, requiredSize);
@@ -178,7 +199,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                 vehicleIdentifier,
                 requiredSize,
                 allocation.spaceLocation(),
-                now());
+                enteredAt,
+                reservation.map(Reservation::id).orElse(null));
         insertSession(session);
         insertRequest(requestId, Operation.ENTER, session);
         return session;
@@ -285,7 +307,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                     zone_code,
                     space_number,
                     status,
-                    entered_at
+                    entered_at,
+                    reservation_id
                 )
                 VALUES (
                     :id,
@@ -296,7 +319,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                     :zoneCode,
                     :spaceNumber,
                     :status,
-                    :enteredAt
+                    :enteredAt,
+                    :reservationId
                 )
                 """)
                 .param("id", session.id().value())
@@ -308,6 +332,11 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                 .param("spaceNumber", location.spaceNumber().value())
                 .param("status", session.status().name())
                 .param("enteredAt", databaseTime(session.enteredAt()))
+                .param(
+                        "reservationId",
+                        Optional.ofNullable(session.reservationId())
+                                .map(ReservationId::value)
+                                .orElse(null))
                 .update();
     }
 
@@ -342,6 +371,7 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
     private ParkingSession mapSession(ResultSet resultSet, int rowNumber) throws SQLException {
         FacilityId facilityId = new FacilityId(resultSet.getObject("facility_id", UUID.class));
         OffsetDateTime exitedAt = resultSet.getObject("exited_at", OffsetDateTime.class);
+        UUID reservationId = resultSet.getObject("reservation_id", UUID.class);
         return new ParkingSession(
                 new SessionId(resultSet.getObject("id", UUID.class)),
                 facilityId,
@@ -353,7 +383,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                         new ZoneCode(resultSet.getString("zone_code")),
                         new SpaceNumber(resultSet.getInt("space_number"))),
                 resultSet.getObject("entered_at", OffsetDateTime.class).toInstant(),
-                exitedAt == null ? null : exitedAt.toInstant());
+                exitedAt == null ? null : exitedAt.toInstant(),
+                reservationId == null ? null : new ReservationId(reservationId));
     }
 
     private Instant now() {

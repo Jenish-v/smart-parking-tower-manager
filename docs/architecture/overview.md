@@ -38,9 +38,10 @@ persistence model is not allowed.
 A parking request contains a request identifier, facility, vehicle identifier, and required size class. The
 parking-session module coordinates the lifecycle through the allocation application interface.
 
-Entry atomically selects a compatible space and starts one active session. Exit atomically releases the allocation and
-completes that session. PostgreSQL stores both modules' state so it survives application restarts. Request identifiers
-make matching entry and exit retries idempotent, including retries processed by another application instance.
+Entry atomically fulfills a matching reservation, selects a compatible space, and starts one active session. The
+session retains the reservation identifier. Exit atomically releases the allocation and completes that session.
+PostgreSQL stores each module's state so it survives application restarts. Request identifiers make matching entry and
+exit retries idempotent, including retries processed by another application instance.
 
 Allocation candidates are ordered by floor number, zone code, and space number. Park operations lock candidate rows with
 `FOR UPDATE SKIP LOCKED`; partial indexes enforce one active assignment and session per vehicle and space. PostgreSQL
@@ -57,9 +58,10 @@ Terminal states cannot transition again.
 
 PostgreSQL persists reservations and serializes facility-scoped capacity decisions. Capacity checks protect nested
 size-compatible pools across every point in the requested window. The public API supports idempotent creation by a
-client-selected UUID, lookup, vehicle history, and repeat-safe cancellation. Expired reservations transition on access;
-a scheduled expiry job, parking-session coordination, and dashboard workflows remain Milestone 10 work. The domain does
-not reserve or allocate a physical space.
+client-selected UUID, lookup, vehicle history, and repeat-safe cancellation. The dashboard exposes those workflows.
+Parking entry row-locks and fulfills a matching claim in the allocation and session transaction; allocation failure
+rolls the transition back. Expired reservations transition on access. A scheduled expiry job remains operational
+hardening work. The domain does not reserve or allocate a physical space.
 
 ## Data
 

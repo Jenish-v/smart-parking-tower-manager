@@ -6,6 +6,7 @@ import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionEx
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
 import com.jenish.smartparking.reservation.application.OverlappingVehicleReservationException;
+import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
 import com.jenish.smartparking.reservation.application.ReservationCapacityExceededException;
 import com.jenish.smartparking.reservation.application.ReservationIdentifierConflictException;
 import com.jenish.smartparking.reservation.application.ReservationNotFoundException;
@@ -127,6 +128,18 @@ public final class ApiExceptionHandler {
                 HttpStatus.CONFLICT,
                 "RESERVATION_CAPACITY_EXCEEDED",
                 "Reservation capacity exceeded",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(ReservationArrivalSizeMismatchException.class)
+    public ResponseEntity<ProblemDetail> handleReservationArrivalSizeMismatch(
+            ReservationArrivalSizeMismatchException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "RESERVATION_SIZE_MISMATCH",
+                "Reservation size mismatch",
                 exception.getMessage(),
                 request));
     }

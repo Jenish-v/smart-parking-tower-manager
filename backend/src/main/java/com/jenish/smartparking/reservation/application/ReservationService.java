@@ -6,6 +6,7 @@ import com.jenish.smartparking.facility.domain.SizeClass;
 import com.jenish.smartparking.reservation.domain.Reservation;
 import com.jenish.smartparking.reservation.domain.ReservationId;
 import com.jenish.smartparking.reservation.domain.ReservationWindow;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,12 @@ public interface ReservationService {
             ReservationWindow window);
 
     Reservation cancel(FacilityId facilityId, ReservationId reservationId);
+
+    Optional<Reservation> fulfillArrival(
+            FacilityId facilityId,
+            VehicleIdentifier vehicleIdentifier,
+            SizeClass requiredSize,
+            Instant arrivedAt);
 
     Optional<Reservation> find(FacilityId facilityId, ReservationId reservationId);
 

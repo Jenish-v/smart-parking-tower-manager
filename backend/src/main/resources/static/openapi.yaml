@@ -10,6 +10,7 @@ paths:
     post:
       operationId: enterVehicle
       summary: Start a parking session
+      description: A matching confirmed reservation is fulfilled atomically and linked in the response.
       parameters:
         - $ref: '#/components/parameters/FacilityId'
         - $ref: '#/components/parameters/IdempotencyKey'
@@ -387,6 +388,11 @@ components:
           type: string
           format: date-time
           nullable: true
+        reservationId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reservation fulfilled by this entry, when the vehicle arrived inside its window.
     Space:
       type: object
       required:

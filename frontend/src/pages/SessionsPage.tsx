@@ -76,6 +76,7 @@ export function SessionsPage() {
               <div>
                 <strong>{formatTime(session.enteredAt)}</strong>
                 <span>{session.exitedAt ? `Exited ${formatTime(session.exitedAt)}` : 'Currently parked'}</span>
+                {session.reservationId && <span>Reservation {session.reservationId}</span>}
               </div>
             </article>
           ))}

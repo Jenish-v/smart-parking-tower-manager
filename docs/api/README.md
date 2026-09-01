@@ -15,6 +15,10 @@ curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e0
   -d '{"vehicleIdentifier":"TOR 501","requiredSize":"SMALL"}'
 ```
 
+If the vehicle has a confirmed reservation whose arrival window contains the entry time, the same transaction fulfills
+the reservation and returns its UUID in `reservationId`. The request size must match the reservation size. A walk-in
+entry returns `null` for that field.
+
 Exit completes the active session and releases its allocation:
 
 ```bash
@@ -95,7 +99,8 @@ Errors use `application/problem+json`. Every problem includes the RFC problem fi
 
 Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`,
 `IDEMPOTENCY_CONFLICT`, `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `RESERVATION_CAPACITY_EXCEEDED`,
-`OVERLAPPING_VEHICLE_RESERVATION`, `RESERVATION_IDENTIFIER_CONFLICT`, `INVALID_RESERVATION_STATE`,
+`RESERVATION_SIZE_MISMATCH`, `OVERLAPPING_VEHICLE_RESERVATION`, `RESERVATION_IDENTIFIER_CONFLICT`,
+`INVALID_RESERVATION_STATE`,
 `RESERVATION_NOT_FOUND`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and `INTERNAL_ERROR`.
 
 ## Security boundary

@@ -15,12 +15,12 @@ describe('session search', () => {
       {
         sessionId: 'session-1', facilityId: 'facility-1', vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL',
         status: 'ACTIVE', space: { floorNumber: 1, zoneCode: 'A', spaceNumber: 7 },
-        enteredAt: '2026-08-19T20:00:00Z', exitedAt: null,
+        enteredAt: '2026-08-19T20:00:00Z', exitedAt: null, reservationId: 'reservation-1',
       },
       {
         sessionId: 'session-2', facilityId: 'facility-1', vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL',
         status: 'COMPLETED', space: { floorNumber: 2, zoneCode: 'B', spaceNumber: 18 },
-        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z',
+        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z', reservationId: null,
       },
     ])
     const user = userEvent.setup()
@@ -32,6 +32,7 @@ describe('session search', () => {
     expect(await screen.findByText('Currently parked')).toBeInTheDocument()
     expect(screen.getByText('Space 7')).toBeInTheDocument()
     expect(screen.getByText('Space 18')).toBeInTheDocument()
+    expect(screen.getByText('Reservation reservation-1')).toBeInTheDocument()
   })
 
   it('renders an explicit empty state', async () => {

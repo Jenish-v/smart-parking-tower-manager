@@ -5,6 +5,7 @@ import com.jenish.smartparking.facility.domain.FacilityId;
 import com.jenish.smartparking.facility.domain.FacilityNotFoundException;
 import com.jenish.smartparking.facility.domain.SizeClass;
 import com.jenish.smartparking.reservation.application.OverlappingVehicleReservationException;
+import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
 import com.jenish.smartparking.reservation.application.ReservationCapacityExceededException;
 import com.jenish.smartparking.reservation.application.ReservationIdentifierConflictException;
 import com.jenish.smartparking.reservation.application.ReservationNotFoundException;
@@ -103,6 +104,20 @@ public final class JdbcReservationService implements ReservationService {
     }
 
     @Override
+    public Optional<Reservation> fulfillArrival(
+            FacilityId facilityId,
+            VehicleIdentifier vehicleIdentifier,
+            SizeClass requiredSize,
+            Instant arrivedAt) {
+        Objects.requireNonNull(facilityId, "facilityId must not be null");
+        Objects.requireNonNull(vehicleIdentifier, "vehicleIdentifier must not be null");
+        Objects.requireNonNull(requiredSize, "requiredSize must not be null");
+        Objects.requireNonNull(arrivedAt, "arrivedAt must not be null");
+        return transactions.execute(status ->
+                fulfillArrivalOnce(facilityId, vehicleIdentifier, requiredSize, arrivedAt));
+    }
+
+    @Override
     public Optional<Reservation> find(FacilityId facilityId, ReservationId reservationId) {
         Objects.requireNonNull(facilityId, "facilityId must not be null");
         Objects.requireNonNull(reservationId, "reservationId must not be null");
@@ -190,6 +205,50 @@ public final class JdbcReservationService implements ReservationService {
                 .param("reservationId", reservationId.value())
                 .update();
         return cancelled;
+    }
+
+    private Optional<Reservation> fulfillArrivalOnce(
+            FacilityId facilityId,
+            VehicleIdentifier vehicleIdentifier,
+            SizeClass requiredSize,
+            Instant arrivedAt) {
+        Optional<Reservation> matching = jdbcClient.sql(RESERVATION_COLUMNS + """
+                WHERE r.facility_id = :facilityId
+                  AND r.vehicle_identifier = :vehicleIdentifier
+                  AND r.status = 'CONFIRMED'
+                  AND r.starts_at <= :arrivedAt
+                  AND r.ends_at > :arrivedAt
+                ORDER BY r.starts_at, r.id
+                LIMIT 1
+                FOR UPDATE OF r
+                """)
+                .param("facilityId", facilityId.value())
+                .param("vehicleIdentifier", vehicleIdentifier.value())
+                .param("arrivedAt", databaseTime(arrivedAt))
+                .query(this::mapReservation)
+                .optional();
+        if (matching.isEmpty()) {
+            return Optional.empty();
+        }
+        Reservation reservation = matching.orElseThrow();
+        if (reservation.requiredSize() != requiredSize) {
+            throw new ReservationArrivalSizeMismatchException(
+                    reservation.id(),
+                    reservation.requiredSize(),
+                    requiredSize);
+        }
+        Reservation fulfilled = reservation.fulfill(arrivedAt);
+        jdbcClient.sql("""
+                UPDATE reservations
+                SET status = 'FULFILLED',
+                    resolved_at = :resolvedAt
+                WHERE id = :reservationId
+                  AND status = 'CONFIRMED'
+                """)
+                .param("resolvedAt", databaseTime(fulfilled.resolvedAt()))
+                .param("reservationId", fulfilled.id().value())
+                .update();
+        return Optional.of(fulfilled);
     }
 
     private void lockFacility(FacilityId facilityId) {

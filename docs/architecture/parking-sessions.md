@@ -6,8 +6,10 @@ The parking-session module owns the vehicle lifecycle from entry through active 
 
 ## Lifecycle
 
-Entry requests contain a request identifier, facility, vehicle identifier, and required size. The module calls the
-allocation application interface, then records the selected location and entry time in the same transaction.
+Entry requests contain a request identifier, facility, vehicle identifier, and required size. The module asks the
+reservation application interface to fulfill a matching arrival, calls the allocation application interface, then
+records the selected location and entry time in the same transaction. A fulfilled reservation identifier is retained
+on the session.
 
 An active session can transition to completed exactly once. Exit releases the allocation and records the exit time in
 one transaction. Repeated completion, exit without an active session, and a second active entry for the same vehicle
@@ -37,9 +39,10 @@ The OpenAPI contract and [API guide](../api/README.md) define validation, idempo
 
 ## Ownership and transactions
 
-The parking-session module owns `parking_sessions` and `parking_session_requests`. It does not query or update the
-allocation module's tables. Coordination occurs through `AllocationService`, with Spring transaction propagation
-joining both module operations to one PostgreSQL transaction.
+The parking-session module owns `parking_sessions` and `parking_session_requests`. It does not query or update
+allocation or reservation tables. Coordination occurs through `AllocationService` and `ReservationService`, with
+Spring transaction propagation joining all module operations to one PostgreSQL transaction. If allocation fails after
+a reservation match, the reservation transition rolls back.
 
 Database partial indexes independently prevent two active sessions for one vehicle or one recorded space. These
 constraints supplement allocation constraints rather than replacing them.
