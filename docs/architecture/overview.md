@@ -25,7 +25,7 @@ extraction. Distribution is not a goal until scale or organizational ownership p
 | Allocation | Candidate selection and active vehicle-to-space assignment |
 | Parking sessions | Idempotent entry, active stay, exit, and vehicle history |
 | Reservations | Future capacity claims and arrival handling |
-| Pricing | Rate plans, fee calculation, and adjustments |
+| Pricing | Versioned rate plans, exact fee calculation, and adjustments |
 | Identity | Operator identity, roles, and access policy |
 | Audit | Append-only record of sensitive and operational actions |
 | Reporting | Occupancy, turnover, utilization, and operational views |
@@ -62,6 +62,16 @@ client-selected UUID, lookup, vehicle history, and repeat-safe cancellation. The
 Parking entry row-locks and fulfills a matching claim in the allocation and session transaction; allocation failure
 rolls the transition back. Expired reservations transition on access. A scheduled expiry job remains operational
 hardening work. The domain does not reserve or allocate a physical space.
+
+## Pricing workflow
+
+The pricing domain represents immutable rate-plan versions with a half-open effective window, grace period, billing
+increment, and a size-specific charge and rolling 24-hour cap. All size bands in a plan use one currency. Fee
+calculation uses minor currency units, rounds billable time up to whole increments, and applies the cap separately to
+each rolling day. Quotes retain the plan identifier and version so a future receipt can reproduce the assessment.
+
+The module is currently framework independent and does not select or persist an active plan. Parking-session receipt
+integration, adjustments, API operations, and dashboard presentation remain Milestone 11 work.
 
 ## Data
 
@@ -134,6 +144,7 @@ local test results.
 - [Allocation domain](allocation-domain.md)
 - [Parking sessions](parking-sessions.md)
 - [Reservation domain](reservation-domain.md)
+- [Pricing domain](pricing-domain.md)
 - [Occupancy reporting](occupancy-reporting.md)
 - [API guide](../api/README.md)
 - [Frontend component standards](../frontend/component-standards.md)

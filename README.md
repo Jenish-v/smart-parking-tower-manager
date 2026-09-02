@@ -3,7 +3,8 @@
 Smart Parking Tower Manager is a modular parking-operations platform built around a deterministic 7,200-space reference
 facility. The implementation includes a Spring Boot backend, a React operator shell, facility, allocation,
 parking-session, and reservation-domain modules, a versioned REST API, PostgreSQL persistence, Flyway migrations, and
-automated backend and frontend checks.
+automated backend and frontend checks. A framework-independent pricing module provides versioned rate plans and exact
+fee calculation without defining an active operating price.
 
 ## Reference facility
 
@@ -34,6 +35,7 @@ the public API through a typed transport boundary.
 | Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
 | Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
+| Pricing | Versioned rate plans, grace periods, increment rounding, and rolling daily caps |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
@@ -43,9 +45,9 @@ the public API through a typed transport boundary.
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
 cancellation against the public API. PostgreSQL serializes reservation capacity claims, protects nested size pools, and
-atomically fulfills a matching claim during parking entry. Pricing, identity, audit, and production deployment remain
-planned. Session and idempotency history is retained without automated deletion until a production retention policy is
-approved.
+atomically fulfills a matching claim during parking entry. Pricing rules are implemented, but rate-plan persistence,
+receipts, adjustments, identity, audit, and production deployment remain planned. Session and idempotency history is
+retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
 integration, not internet-facing production deployment.
@@ -161,6 +163,7 @@ response, idempotency, and error behaviour.
 - [Allocation domain](docs/architecture/allocation-domain.md)
 - [Parking sessions](docs/architecture/parking-sessions.md)
 - [Reservation domain](docs/architecture/reservation-domain.md)
+- [Pricing domain](docs/architecture/pricing-domain.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
