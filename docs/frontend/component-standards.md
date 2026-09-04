@@ -25,6 +25,9 @@ Time-bound forms use native date and time controls and send UTC instants to the 
 client-selected identifier until the matching command succeeds. Cancellation updates the returned reservation in place
 instead of predicting a terminal state in the browser.
 
+Exit results render monetary totals from the server receipt in currency minor units. The browser does not repeat fee
+calculation or infer a total from timestamps. Receipt-history navigation remains a separate workflow.
+
 ## Testing
 
 Component tests assert user-observable behaviour through roles, names, and content. API client tests verify URL

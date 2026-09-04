@@ -1,6 +1,6 @@
 # Persistence
 
-PostgreSQL is the system of record. Facility, allocation, parking-session, and reservation schemas are managed only
+PostgreSQL is the system of record. Facility, allocation, parking-session, reservation, and pricing schemas are managed only
 through Flyway migrations.
 
 ## Schema ownership
@@ -11,6 +11,7 @@ through Flyway migrations.
 | Allocation | `active_allocations` |
 | Parking sessions | `parking_sessions`, `parking_session_requests` |
 | Reservations | `reservations` |
+| Pricing | `pricing_rate_plans`, `pricing_rate_bands`, `parking_receipts` |
 
 The facility hierarchy stores configured space identity, size, and operational state. Natural identifiers are unique
 within their parent, and check constraints reproduce domain identifier and state rules.
@@ -27,6 +28,10 @@ Reservation rows record the vehicle, minimum size, half-open arrival window, lif
 time. Indexes support confirmed-window capacity checks and vehicle history. Constraints reproduce the domain's size,
 status, identifier, window, and transition-time rules.
 
+Pricing rows store immutable versioned plans and a complete rate band for each size. An exclusion constraint prevents
+overlapping effective windows. Each completed session has at most one receipt snapshot containing its exact plan
+version, calculation inputs, gross charge, cap discount, total, and currency.
+
 ## Transactions and locking
 
 The allocation adapter selects a compatible `parking_spaces` row with
@@ -36,6 +41,8 @@ Bounded retries rerun a complete allocation transaction after transient data-acc
 
 Parking-session entry and exit wrap calls to the allocation application interface in an outer transaction. Standard
 Spring transaction propagation makes session, allocation, and matched-reservation writes commit or roll back together.
+Receipt assessment participates in the exit transaction, so missing pricing or a failed receipt write also restores the
+active session and allocation.
 PostgreSQL advisory transaction locks serialize reuse of one request identifier without creating process-local
 coordination. A matched reservation is row-locked before its fulfillment transition.
 
@@ -52,8 +59,9 @@ Production schema migrations are under `backend/src/main/resources/db/migration`
 
 Development fixtures are under `backend/src/main/resources/db/devdata` and load only with the Spring `local` profile.
 The reference fixture uses deterministic UUIDs and creates 7,200 active spaces across six floors and six zones per
-floor. Every zone has 100 small, 80 medium, and 20 large spaces.
+floor. Every zone has 100 small, 80 medium, and 20 large spaces. A separate development fixture provides the labelled
+CAD reference rate used by local exit workflows.
 
 Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
 allocation concurrency, session transitions, request replay, rollback behaviour, reservation capacity concurrency,
-cancellation, expiry, arrival fulfillment, and history.
+cancellation, expiry, arrival fulfillment, pricing persistence, receipt replay, and history.

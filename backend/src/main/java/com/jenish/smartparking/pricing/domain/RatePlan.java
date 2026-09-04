@@ -46,6 +46,9 @@ public record RatePlan(
                 || billingIncrement.compareTo(ROLLING_DAY) > 0) {
             throw new IllegalArgumentException("billingIncrement must be between zero and 24 hours");
         }
+        if (gracePeriod.toNanosPart() != 0 || billingIncrement.toNanosPart() != 0) {
+            throw new IllegalArgumentException("pricing durations must use whole seconds");
+        }
         if (!rates.keySet().equals(Set.of(SizeClass.values()))) {
             throw new IllegalArgumentException("rates must contain every size class and no other keys");
         }

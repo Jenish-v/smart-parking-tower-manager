@@ -15,12 +15,12 @@ describe('session search', () => {
       {
         sessionId: 'session-1', facilityId: 'facility-1', vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL',
         status: 'ACTIVE', space: { floorNumber: 1, zoneCode: 'A', spaceNumber: 7 },
-        enteredAt: '2026-08-19T20:00:00Z', exitedAt: null, reservationId: 'reservation-1',
+        enteredAt: '2026-08-19T20:00:00Z', exitedAt: null, reservationId: 'reservation-1', receipt: null,
       },
       {
         sessionId: 'session-2', facilityId: 'facility-1', vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL',
         status: 'COMPLETED', space: { floorNumber: 2, zoneCode: 'B', spaceNumber: 18 },
-        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z', reservationId: null,
+        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z', reservationId: null, receipt: null,
       },
     ])
     const user = userEvent.setup()

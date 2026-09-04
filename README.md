@@ -35,7 +35,7 @@ the public API through a typed transport boundary.
 | Allocation | Deterministic selection, persisted assignments, occupancy snapshots, row locking, bounded retries |
 | Parking sessions | Idempotent entry and exit, active lookup, immutable session history |
 | Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
-| Pricing | Versioned rate plans, grace periods, increment rounding, and rolling daily caps |
+| Pricing | Persisted rate plans, deterministic fee calculation, and immutable exit receipts |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
@@ -45,9 +45,10 @@ the public API through a typed transport boundary.
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
 cancellation against the public API. PostgreSQL serializes reservation capacity claims, protects nested size pools, and
-atomically fulfills a matching claim during parking entry. Pricing rules are implemented, but rate-plan persistence,
-receipts, adjustments, identity, audit, and production deployment remain planned. Session and idempotency history is
-retained without automated deletion until a production retention policy is approved.
+atomically fulfills a matching claim during parking entry. Exit selects the plan that applied at entry time and stores
+an immutable receipt in the same transaction; the dashboard presents its total and reference. Manual fee adjustments,
+receipt-history views, identity, audit, and production deployment remain planned. Session, receipt, and idempotency
+history is retained without automated deletion until a production retention policy is approved.
 
 The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
 integration, not internet-facing production deployment.
@@ -71,7 +72,8 @@ docker compose up --build
 
 The operator dashboard is available at `http://localhost:5173`, the backend at `http://localhost:8080`, and the OpenAPI
 contract at `http://localhost:8080/openapi.yaml`. The local profile loads the deterministic 7,200-space reference
-facility. Stop the services with `docker compose down`. Add `--volumes` only when the local database should be erased.
+facility and a clearly labelled CAD reference rate plan. Stop the services with `docker compose down`. Add `--volumes`
+only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
 loads the operator dashboard before runtime changes can be merged.
 

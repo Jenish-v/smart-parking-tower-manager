@@ -5,6 +5,19 @@ export { ApiError } from './http'
 export type SpaceSize = 'SMALL' | 'MEDIUM' | 'LARGE'
 export type SessionStatus = 'ACTIVE' | 'COMPLETED'
 
+export interface ParkingReceipt {
+  receiptId: string
+  ratePlanId: string
+  ratePlanVersion: number
+  billableDuration: string
+  billingIncrements: number
+  grossChargeMinor: number
+  capDiscountMinor: number
+  totalMinor: number
+  currency: string
+  issuedAt: string
+}
+
 export interface ParkingSession {
   sessionId: string
   facilityId: string
@@ -19,6 +32,7 @@ export interface ParkingSession {
   enteredAt: string
   exitedAt: string | null
   reservationId: string | null
+  receipt: ParkingReceipt | null
 }
 
 export interface OccupancySnapshot {

@@ -46,6 +46,7 @@ class ParkingSessionApiTest {
 
     @BeforeEach
     void resetData() {
+        jdbcClient.sql("DELETE FROM parking_receipts").update();
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();
         jdbcClient.sql("DELETE FROM reservations").update();
@@ -88,6 +89,9 @@ class ParkingSessionApiTest {
                 """);
         assertEquals(200, exited.statusCode());
         assertTrue(exited.body().contains("\"status\":\"COMPLETED\""));
+        assertTrue(exited.body().contains("\"currency\":\"CAD\""));
+        assertTrue(exited.body().contains("\"ratePlanVersion\":1"));
+        assertEquals(1L, jdbcClient.sql("SELECT count(*) FROM parking_receipts").query(Long.class).single());
 
         HttpResponse<String> history = get("?vehicleIdentifier=TOR%20501");
         assertEquals(200, history.statusCode());

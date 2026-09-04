@@ -12,9 +12,11 @@ import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionEx
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
 import com.jenish.smartparking.parkingsession.application.ParkingSessionService;
+import com.jenish.smartparking.parkingsession.application.ParkingSessionExit;
 import com.jenish.smartparking.parkingsession.domain.ParkingSession;
 import com.jenish.smartparking.parkingsession.domain.ParkingSessionStatus;
 import com.jenish.smartparking.parkingsession.domain.RequestId;
+import com.jenish.smartparking.pricing.application.NoApplicableRatePlanException;
 import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
 import com.jenish.smartparking.reservation.domain.ReservationId;
 import java.time.Instant;
@@ -58,6 +60,7 @@ class JdbcParkingSessionServiceTest {
 
     @BeforeEach
     void resetSessionsAndCapacity() {
+        jdbcClient.sql("DELETE FROM parking_receipts").update();
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();
         jdbcClient.sql("DELETE FROM reservations").update();
@@ -87,15 +90,18 @@ class JdbcParkingSessionServiceTest {
         assertEquals(entered, sessionService.findActive(FACILITY_ID, vehicle).orElseThrow());
 
         RequestId exitRequest = RequestId.newId();
-        ParkingSession exited = sessionService.exit(exitRequest, FACILITY_ID, vehicle);
-        ParkingSession exitReplay = sessionService.exit(exitRequest, FACILITY_ID, vehicle);
+        ParkingSessionExit exited = sessionService.exit(exitRequest, FACILITY_ID, vehicle);
+        ParkingSessionExit exitReplay = sessionService.exit(exitRequest, FACILITY_ID, vehicle);
 
         assertEquals(exited, exitReplay);
-        assertEquals(ParkingSessionStatus.COMPLETED, exited.status());
+        assertEquals(ParkingSessionStatus.COMPLETED, exited.session().status());
+        assertEquals(entered.id().value(), exited.receipt().sessionId());
+        assertEquals("CAD", exited.receipt().quote().total().currency().getCurrencyCode());
         assertTrue(sessionService.findActive(FACILITY_ID, vehicle).isEmpty());
-        assertEquals(List.of(exited), sessionService.history(FACILITY_ID, vehicle));
+        assertEquals(List.of(exited.session()), sessionService.history(FACILITY_ID, vehicle));
         assertEquals(2L, count("parking_session_requests"));
         assertEquals(1L, count("parking_sessions"));
+        assertEquals(1L, count("parking_receipts"));
         assertEquals(1L, countReleasedAllocations());
     }
 
@@ -210,6 +216,26 @@ class JdbcParkingSessionServiceTest {
         assertEquals(0L, countActiveAllocations());
     }
 
+    @Test
+    void keepsTheSessionAndAllocationActiveWhenPricingIsUnavailable() {
+        activateSpace(1, "A", 1);
+        VehicleIdentifier vehicle = new VehicleIdentifier("missing price");
+        sessionService.enter(RequestId.newId(), FACILITY_ID, vehicle, SizeClass.SMALL);
+        deleteReferenceRatePlan();
+
+        try {
+            assertThrows(
+                    NoApplicableRatePlanException.class,
+                    () -> sessionService.exit(RequestId.newId(), FACILITY_ID, vehicle));
+
+            assertTrue(sessionService.findActive(FACILITY_ID, vehicle).isPresent());
+            assertEquals(1L, countActiveAllocations());
+            assertEquals(0L, count("parking_receipts"));
+        } finally {
+            insertReferenceRatePlan();
+        }
+    }
+
     private List<ParkingSession> runConcurrently(
             Callable<ParkingSession> first,
             Callable<ParkingSession> second) throws Exception {
@@ -289,6 +315,32 @@ class JdbcParkingSessionServiceTest {
                 .param("id", reservationId.value())
                 .query(String.class)
                 .single();
+    }
+
+    private void deleteReferenceRatePlan() {
+        jdbcClient.sql("DELETE FROM pricing_rate_bands").update();
+        jdbcClient.sql("DELETE FROM pricing_rate_plans").update();
+    }
+
+    private void insertReferenceRatePlan() {
+        jdbcClient.sql("""
+                INSERT INTO pricing_rate_plans (
+                    id, version, name, effective_from, effective_until,
+                    grace_seconds, billing_increment_seconds, currency
+                ) VALUES (
+                    'acd13eb1-c151-4c4c-a83b-dd16c11bd0ef', 1, 'Reference CAD rate',
+                    '2000-01-01T00:00:00Z', NULL, 600, 900, 'CAD'
+                )
+                """).update();
+        jdbcClient.sql("""
+                INSERT INTO pricing_rate_bands (
+                    rate_plan_id, rate_plan_version, size_class,
+                    increment_charge_minor, rolling_day_cap_minor
+                ) VALUES
+                    ('acd13eb1-c151-4c4c-a83b-dd16c11bd0ef', 1, 'SMALL', 125, 2000),
+                    ('acd13eb1-c151-4c4c-a83b-dd16c11bd0ef', 1, 'MEDIUM', 150, 2500),
+                    ('acd13eb1-c151-4c4c-a83b-dd16c11bd0ef', 1, 'LARGE', 200, 3000)
+                """).update();
     }
 
     private Instant reservationResolvedAt(ReservationId reservationId) {

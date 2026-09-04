@@ -393,6 +393,60 @@ components:
           format: uuid
           nullable: true
           description: Reservation fulfilled by this entry, when the vehicle arrived inside its window.
+        receipt:
+          allOf:
+            - $ref: '#/components/schemas/ParkingReceipt'
+          nullable: true
+          description: Immutable fee assessment returned when an exit completes.
+    ParkingReceipt:
+      type: object
+      required:
+        - receiptId
+        - ratePlanId
+        - ratePlanVersion
+        - billableDuration
+        - billingIncrements
+        - grossChargeMinor
+        - capDiscountMinor
+        - totalMinor
+        - currency
+        - issuedAt
+      properties:
+        receiptId:
+          type: string
+          format: uuid
+        ratePlanId:
+          type: string
+          format: uuid
+        ratePlanVersion:
+          type: integer
+          format: int64
+        billableDuration:
+          type: string
+          description: ISO 8601 duration after the grace period.
+          example: PT25M
+        billingIncrements:
+          type: integer
+          format: int64
+          minimum: 0
+        grossChargeMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        capDiscountMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        totalMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        issuedAt:
+          type: string
+          format: date-time
     Space:
       type: object
       required:
