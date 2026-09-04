@@ -1,4 +1,5 @@
 import {
+  adjustFee,
   enterVehicle,
   findActiveSession,
   getOccupancy,
@@ -95,6 +96,30 @@ describe('parking session API client', () => {
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe('/api/v1/facilities/facility%2Fone/occupancy')
     expect(options?.signal).toBe(controller.signal)
+  })
+
+  it('puts a reason-coded adjustment with a client-selected identifier', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ receiptId: 'receipt-1', adjustments: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+    const command = {
+      amountMinor: -100,
+      reason: 'CUSTOMER_SERVICE' as const,
+      reasonDetail: 'Validated service recovery',
+      operatorReference: 'operator-1',
+    }
+
+    await adjustFee('facility/one', 'session/one', 'adjustment/one', command)
+
+    const [url, options] = fetchMock.mock.calls[0]
+    expect(url).toBe(
+      '/api/v1/facilities/facility%2Fone/parking-sessions/session%2Fone/receipt/adjustments/adjustment%2Fone',
+    )
+    expect(options?.method).toBe('PUT')
+    expect(options?.body).toBe(JSON.stringify(command))
   })
 
   it('opens and closes the facility occupancy stream', () => {

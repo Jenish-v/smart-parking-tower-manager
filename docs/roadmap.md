@@ -3,8 +3,8 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-Milestones 1 through 10 are implemented. Milestone 11 is in progress: persisted rate plans, deterministic fee
-calculation, and transactional parking-session receipts are implemented. Manual adjustments remain.
+Milestones 1 through 11 are implemented. Pricing includes persisted rate plans, deterministic fee calculation,
+transactional parking-session receipts, append-only manual adjustments, and searchable receipt totals.
 
 The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
 operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria
@@ -83,9 +83,9 @@ are satisfied; the roadmap has no calendar-based completion claim.
 ## Milestone 11: Pricing
 
 - Add versioned rate plans and fee calculation. Implemented.
-- Record manual adjustments with reasons.
+- Record manual adjustments with reasons. Implemented.
 - Add parking-session receipts. Implemented.
-- Test time, rounding, and pricing boundaries.
+- Test time, rounding, adjustment, and pricing boundaries. Implemented.
 
 ## Milestone 12: Identity and audit
 

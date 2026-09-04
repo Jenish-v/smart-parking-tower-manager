@@ -36,12 +36,19 @@ Money is represented in currency minor units. The calculation does not use float
 overflow fails explicitly. The resulting quote records gross charge, cap discount, total, billable duration, increment
 count, and the exact rate-plan identifier and version.
 
-## Boundaries
+## Receipts and adjustments
 
 Rate plans and receipt snapshots are persisted. Parking-session exit selects the version effective at entry, calculates
 the fee, and stores one receipt in the same transaction as allocation release and session completion. Replaying the exit
 returns the same receipt.
 
-The dashboard presents the receipt returned by an exit. Manual adjustments, rate-plan administration APIs, receipt
-history presentation, tax handling, and refunds are not yet implemented. Payment processing is outside the current
-roadmap; receipts record assessed parking fees and do not claim settlement.
+Vehicle history includes the immutable base receipt for a completed session. A separate receipt statement contains the
+base total, signed adjustments, and current adjusted total. Adjustments are append-only and require a client-selected
+UUID, signed minor-unit amount, reason code, reason detail, operator reference, and creation time. Replaying identical
+facts under the same UUID returns the existing statement; changing any fact returns a conflict. An adjustment cannot
+reduce the statement below zero.
+
+The base receipt remains unchanged so its rate-plan calculation can always be reproduced. An operator reference is an
+unverified caller-supplied label until identity is implemented. Rate-plan administration APIs, tax handling, and
+refund settlement are not implemented. Payment processing is outside the current roadmap; receipts and adjustments
+record assessed fees and corrections but do not claim payment or refund settlement.

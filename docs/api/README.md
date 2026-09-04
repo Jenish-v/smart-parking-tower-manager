@@ -67,6 +67,26 @@ History returns an array ordered by newest entry first:
 curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions?vehicleIdentifier=TOR%20501'
 ```
 
+Completed history entries include the immutable base receipt. The full receipt statement includes every adjustment and
+the adjusted total:
+
+```bash
+curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/0ade0191-8373-4ff1-ae23-c998b00f8d5c/receipt'
+```
+
+Append a signed adjustment with a client-selected UUID. The base receipt is never modified:
+
+```bash
+curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/0ade0191-8373-4ff1-ae23-c998b00f8d5c/receipt/adjustments/10a87fd2-d22b-41bd-bba9-b1fbe13297f7 \
+  -X PUT \
+  -H 'Content-Type: application/json' \
+  -d '{"amountMinor":-100,"reason":"CUSTOMER_SERVICE","reasonDetail":"Validated service recovery","operatorReference":"operator-1"}'
+```
+
+Amounts use signed integer minor units. Reasons are `CUSTOMER_SERVICE`, `RATE_CORRECTION`, `OPERATIONAL_EXCEPTION`, or
+`OTHER`. An identical adjustment UUID and body is replay-safe; reusing the UUID for different facts returns a conflict.
+The adjusted total cannot be negative. `operatorReference` is an unverified label until authentication is implemented.
+
 Reservation lookup uses its UUID. Reservation history is ordered by newest creation first:
 
 ```bash
@@ -104,8 +124,9 @@ Errors use `application/problem+json`. Every problem includes the RFC problem fi
 Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`,
 `IDEMPOTENCY_CONFLICT`, `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `RESERVATION_CAPACITY_EXCEEDED`,
 `RESERVATION_SIZE_MISMATCH`, `OVERLAPPING_VEHICLE_RESERVATION`, `RESERVATION_IDENTIFIER_CONFLICT`,
-`INVALID_RESERVATION_STATE`, `RESERVATION_NOT_FOUND`, `RATE_PLAN_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`,
-and `INTERNAL_ERROR`.
+`INVALID_RESERVATION_STATE`, `RESERVATION_NOT_FOUND`, `RATE_PLAN_UNAVAILABLE`, `RECEIPT_NOT_FOUND`,
+`ADJUSTMENT_IDENTIFIER_CONFLICT`, `NEGATIVE_ADJUSTED_TOTAL`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and
+`INTERNAL_ERROR`.
 
 ## Security boundary
 

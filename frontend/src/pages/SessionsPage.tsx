@@ -8,6 +8,13 @@ function formatTime(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
+function formatMinorUnits(amount: number, currency: string) {
+  const options = new Intl.NumberFormat('en-CA', { style: 'currency', currency }).resolvedOptions()
+  const fractionDigits = options.maximumFractionDigits ?? 2
+  const value = amount / (10 ** fractionDigits)
+  return `${value.toFixed(fractionDigits)} ${currency}`
+}
+
 export function SessionsPage() {
   const [vehicle, setVehicle] = useState('')
   const [searchedVehicle, setSearchedVehicle] = useState('')
@@ -77,6 +84,11 @@ export function SessionsPage() {
                 <strong>{formatTime(session.enteredAt)}</strong>
                 <span>{session.exitedAt ? `Exited ${formatTime(session.exitedAt)}` : 'Currently parked'}</span>
                 {session.reservationId && <span>Reservation {session.reservationId}</span>}
+                {session.receipt && (
+                  <span>
+                    Receipt total {formatMinorUnits(session.receipt.totalMinor, session.receipt.currency)}
+                  </span>
+                )}
               </div>
             </article>
           ))}

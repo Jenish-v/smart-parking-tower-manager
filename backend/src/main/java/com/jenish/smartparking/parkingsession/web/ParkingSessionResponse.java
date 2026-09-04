@@ -36,7 +36,12 @@ public record ParkingSessionResponse(
     }
 
     public static ParkingSessionResponse from(ParkingSessionExit result) {
-        ParkingSession session = result.session();
+        return from(result.session(), result.receipt());
+    }
+
+    public static ParkingSessionResponse from(
+            ParkingSession session,
+            ParkingReceipt receipt) {
         return new ParkingSessionResponse(
                 session.id().value(),
                 session.facilityId().value(),
@@ -50,7 +55,7 @@ public record ParkingSessionResponse(
                 session.enteredAt(),
                 session.exitedAt(),
                 session.reservationId() == null ? null : session.reservationId().value(),
-                ReceiptResponse.from(result.receipt()));
+                ReceiptResponse.from(receipt));
     }
 
     public record SpaceResponse(

@@ -4,7 +4,9 @@ The operator dashboard is a React and TypeScript browser application. It provide
 reference-facility occupancy, parking entry and exit, vehicle session search, and reservation creation, history, and
 cancellation through typed API clients. Occupancy uses a server-sent event stream, falls back to 15-second refresh
 while disconnected, and can be refreshed manually. A completed exit presents the immutable receipt total and reference
-returned by the backend.
+returned by the backend. Vehicle history also presents the immutable base receipt total for completed sessions. The
+dashboard does not yet expose the administrative adjustment command; the typed client supports that API for the
+identity and authorization work that must precede an operator control.
 
 ## Requirements
 

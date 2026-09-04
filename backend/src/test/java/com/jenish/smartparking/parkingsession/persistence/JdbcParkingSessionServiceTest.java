@@ -60,6 +60,7 @@ class JdbcParkingSessionServiceTest {
 
     @BeforeEach
     void resetSessionsAndCapacity() {
+        jdbcClient.sql("DELETE FROM fee_adjustments").update();
         jdbcClient.sql("DELETE FROM parking_receipts").update();
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();

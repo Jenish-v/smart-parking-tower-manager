@@ -20,7 +20,12 @@ describe('session search', () => {
       {
         sessionId: 'session-2', facilityId: 'facility-1', vehicleIdentifier: 'TOR 501', requiredSize: 'SMALL',
         status: 'COMPLETED', space: { floorNumber: 2, zoneCode: 'B', spaceNumber: 18 },
-        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z', reservationId: null, receipt: null,
+        enteredAt: '2026-08-18T20:00:00Z', exitedAt: '2026-08-18T22:00:00Z', reservationId: null,
+        receipt: {
+          receiptId: 'receipt-1', ratePlanId: 'rate-1', ratePlanVersion: 1, billableDuration: 'PT1H50M',
+          billingIncrements: 8, grossChargeMinor: 1000, capDiscountMinor: 0, totalMinor: 1000,
+          currency: 'CAD', issuedAt: '2026-08-18T22:00:00Z',
+        },
       },
     ])
     const user = userEvent.setup()
@@ -33,6 +38,7 @@ describe('session search', () => {
     expect(screen.getByText('Space 7')).toBeInTheDocument()
     expect(screen.getByText('Space 18')).toBeInTheDocument()
     expect(screen.getByText('Reservation reservation-1')).toBeInTheDocument()
+    expect(screen.getByText('Receipt total 10.00 CAD')).toBeInTheDocument()
   })
 
   it('renders an explicit empty state', async () => {
