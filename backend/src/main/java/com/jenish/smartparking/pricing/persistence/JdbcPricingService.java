@@ -392,7 +392,7 @@ public final class JdbcPricingService implements PricingService {
                 )
                 """)
                 .param("adjustmentId", adjustmentId.toString())
-                .query(Long.class)
+                .query((resultSet, rowNumber) -> Boolean.TRUE)
                 .single();
     }
 
