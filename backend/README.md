@@ -3,9 +3,10 @@
 The backend is a Java 21 and Spring Boot service. It owns the parking domain, versioned REST API, persistence, and
 operational endpoints.
 
-The framework-independent pricing domain calculates exact fee quotes from immutable rate-plan versions. It covers
-grace periods, increment rounding, vehicle-size rates, and rolling 24-hour caps. No active plan is configured and fee
-quotes are not yet persisted or connected to parking-session exits.
+The pricing module persists immutable rate-plan versions and calculates exact fee quotes. It covers grace periods,
+increment rounding, vehicle-size rates, and rolling 24-hour caps. Exit stores one immutable receipt with the session and
+returns its calculation breakdown. The local profile provides a labelled CAD reference plan; non-local environments
+must provision a non-overlapping applicable plan before processing exits.
 
 ## Requirements
 
@@ -51,7 +52,8 @@ Docker-backed tests apply all Flyway migrations, load the reference fixture, and
 reporting, server-sent delivery, idempotent parking-session commands, concurrent allocation, and reservation capacity
 claims against PostgreSQL. The suite also covers reservation cancellation, expiry, lifecycle transitions, and arrival
 matching, including rollback when a matched arrival cannot obtain a space.
-Pricing tests cover grace, rounding, effective-window, size-rate, daily-cap, currency, and overflow boundaries.
+Pricing tests cover grace, rounding, effective-window, size-rate, daily-cap, currency, overflow, persistence, replay,
+and missing-plan rollback boundaries.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run

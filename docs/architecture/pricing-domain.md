@@ -6,9 +6,9 @@ The pricing domain calculates a parking fee from an immutable rate-plan version,
 time. It has no dependency on Spring, persistence, or HTTP so the same rules can be exercised before a receipt is
 stored or presented through an API.
 
-No active rate plan ships with the application. Currency, prices, grace periods, effective windows, and billing
-increments are operating decisions and must be configured through the persisted rate-plan work before fees can be
-charged by a parking session.
+The local development fixture ships with a labelled CAD reference plan so the complete stack can exercise paid exits.
+It is not a production price recommendation. Non-local environments must provision an applicable plan as an operating
+decision before processing exits.
 
 ## Rate plans
 
@@ -23,6 +23,9 @@ instant is included and the optional end instant is excluded. Each version defin
 Historical versions must remain immutable after use. A new price or policy therefore creates a new version instead of
 editing the values that produced an existing receipt.
 
+PostgreSQL prevents overlapping effective windows, so exactly one plan can apply at a session's entry time. Exits fail
+without releasing the allocation when no plan applies.
+
 ## Calculation
 
 The calculation removes the grace period from the stay, then rounds each remaining duration up to the next billing
@@ -35,7 +38,10 @@ count, and the exact rate-plan identifier and version.
 
 ## Boundaries
 
-The current module calculates deterministic quotes only. Active-plan selection, database storage, manual adjustments,
-session receipts, payment collection, tax handling, refunds, API endpoints, and dashboard workflows are not yet
-implemented. Payment processing is outside the current roadmap; receipts will record assessed parking fees rather than
-claiming settlement.
+Rate plans and receipt snapshots are persisted. Parking-session exit selects the version effective at entry, calculates
+the fee, and stores one receipt in the same transaction as allocation release and session completion. Replaying the exit
+returns the same receipt.
+
+The dashboard presents the receipt returned by an exit. Manual adjustments, rate-plan administration APIs, receipt
+history presentation, tax handling, and refunds are not yet implemented. Payment processing is outside the current
+roadmap; receipts record assessed parking fees and do not claim settlement.

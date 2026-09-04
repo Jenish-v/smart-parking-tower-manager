@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import { ApiError, enterVehicle } from '../api/parkingSessions'
+import { ApiError, enterVehicle, exitVehicle } from '../api/parkingSessions'
 import { OperationsPage } from './OperationsPage'
 
 vi.mock('../api/parkingSessions', async (importOriginal) => {
@@ -19,6 +19,25 @@ const activeSession = {
   enteredAt: '2026-08-19T20:00:00Z',
   exitedAt: null,
   reservationId: 'reservation-1',
+  receipt: null,
+}
+
+const completedSession = {
+  ...activeSession,
+  status: 'COMPLETED' as const,
+  exitedAt: '2026-08-19T21:00:00Z',
+  receipt: {
+    receiptId: 'receipt-1',
+    ratePlanId: 'rate-plan-1',
+    ratePlanVersion: 1,
+    billableDuration: 'PT50M',
+    billingIncrements: 4,
+    grossChargeMinor: 500,
+    capDiscountMinor: 0,
+    totalMinor: 500,
+    currency: 'CAD',
+    issuedAt: '2026-08-19T21:00:00Z',
+  },
 }
 
 describe('parking operations', () => {
@@ -64,5 +83,18 @@ describe('parking operations', () => {
     const firstKey = vi.mocked(enterVehicle).mock.calls[0][2]
     const retryKey = vi.mocked(enterVehicle).mock.calls[1][2]
     expect(retryKey).toBe(firstKey)
+  })
+
+  it('completes an exit and presents its receipt', async () => {
+    vi.mocked(exitVehicle).mockResolvedValue(completedSession)
+    const user = userEvent.setup()
+    render(<OperationsPage />)
+
+    await user.type(screen.getByLabelText('Vehicle identifier', { selector: '#exit-vehicle' }), 'TOR 501')
+    await user.click(screen.getByRole('button', { name: 'Complete exit' }))
+
+    expect(await screen.findByText('Exit completed')).toBeInTheDocument()
+    expect(screen.getByText('Total 5.00 CAD')).toBeInTheDocument()
+    expect(screen.getByText(/Receipt receipt-1 · 4 billing increments/)).toBeInTheDocument()
   })
 })

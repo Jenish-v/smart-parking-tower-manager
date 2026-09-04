@@ -14,12 +14,15 @@ import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionEx
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
 import com.jenish.smartparking.parkingsession.application.ParkingSessionService;
+import com.jenish.smartparking.parkingsession.application.ParkingSessionExit;
 import com.jenish.smartparking.parkingsession.domain.ParkingSession;
 import com.jenish.smartparking.parkingsession.domain.RequestId;
 import com.jenish.smartparking.parkingsession.domain.SessionId;
 import com.jenish.smartparking.reservation.application.ReservationService;
 import com.jenish.smartparking.reservation.domain.Reservation;
 import com.jenish.smartparking.reservation.domain.ReservationId;
+import com.jenish.smartparking.pricing.application.PricingService;
+import com.jenish.smartparking.pricing.domain.ParkingReceipt;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -89,6 +92,8 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
 
     private final ReservationService reservationService;
 
+    private final PricingService pricingService;
+
     private final TransactionOperations transactions;
 
     private final Clock clock;
@@ -98,11 +103,13 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
             JdbcClient jdbcClient,
             AllocationService allocationService,
             ReservationService reservationService,
+            PricingService pricingService,
             PlatformTransactionManager transactionManager) {
         this(
                 jdbcClient,
                 allocationService,
                 reservationService,
+                pricingService,
                 new TransactionTemplate(transactionManager),
                 Clock.systemUTC());
     }
@@ -111,11 +118,13 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
             JdbcClient jdbcClient,
             AllocationService allocationService,
             ReservationService reservationService,
+            PricingService pricingService,
             TransactionOperations transactions,
             Clock clock) {
         this.jdbcClient = Objects.requireNonNull(jdbcClient, "jdbcClient must not be null");
         this.allocationService = Objects.requireNonNull(allocationService, "allocationService must not be null");
         this.reservationService = Objects.requireNonNull(reservationService, "reservationService must not be null");
+        this.pricingService = Objects.requireNonNull(pricingService, "pricingService must not be null");
         this.transactions = Objects.requireNonNull(transactions, "transactions must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
     }
@@ -133,7 +142,7 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
     }
 
     @Override
-    public ParkingSession exit(
+    public ParkingSessionExit exit(
             RequestId requestId,
             FacilityId facilityId,
             VehicleIdentifier vehicleIdentifier) {
@@ -206,7 +215,7 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
         return session;
     }
 
-    private ParkingSession exitOnce(
+    private ParkingSessionExit exitOnce(
             RequestId requestId,
             FacilityId facilityId,
             VehicleIdentifier vehicleIdentifier) {
@@ -220,6 +229,11 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                 .orElseThrow(() -> new NoActiveParkingSessionException(vehicleIdentifier));
         allocationService.unpark(facilityId, vehicleIdentifier);
         ParkingSession completed = active.complete(now());
+        ParkingReceipt receipt = pricingService.assess(
+                completed.id().value(),
+                completed.requiredSize(),
+                completed.enteredAt(),
+                completed.exitedAt());
         jdbcClient.sql("""
                 UPDATE parking_sessions
                 SET status = 'COMPLETED',
@@ -231,7 +245,7 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                 .param("sessionId", completed.id().value())
                 .update();
         insertRequest(requestId, Operation.EXIT, completed);
-        return completed;
+        return new ParkingSessionExit(completed, receipt);
     }
 
     private void lockRequest(RequestId requestId) {
@@ -283,7 +297,7 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
         return stored.session();
     }
 
-    private ParkingSession replayExit(
+    private ParkingSessionExit replayExit(
             StoredRequest stored,
             FacilityId facilityId,
             VehicleIdentifier vehicleIdentifier) {
@@ -292,7 +306,9 @@ public final class JdbcParkingSessionService implements ParkingSessionService {
                 || !stored.vehicleIdentifier().equals(vehicleIdentifier)) {
             throw new IdempotencyConflictException(stored.requestId());
         }
-        return stored.session();
+        ParkingReceipt receipt = pricingService.findReceipt(stored.session().id().value())
+                .orElseThrow(() -> new IllegalStateException("completed session has no receipt"));
+        return new ParkingSessionExit(stored.session(), receipt);
     }
 
     private void insertSession(ParkingSession session) {

@@ -328,6 +328,8 @@ h1 {
 }
 .space-assignment { padding: 0.45rem 0 0.2rem; font-weight: 750; }
 .result-meta { color: var(--muted); font-size: 0.76rem; }
+.receipt-summary { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--line); }
+.receipt-total { font-size: 1rem; font-weight: 750; }
 
 .search-form { max-width: 760px; }
 .search-control { display: flex; gap: 0.75rem; }

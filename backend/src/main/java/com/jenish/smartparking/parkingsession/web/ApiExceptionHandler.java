@@ -5,6 +5,7 @@ import com.jenish.smartparking.facility.domain.FacilityNotFoundException;
 import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionExistsException;
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
+import com.jenish.smartparking.pricing.application.NoApplicableRatePlanException;
 import com.jenish.smartparking.reservation.application.OverlappingVehicleReservationException;
 import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
 import com.jenish.smartparking.reservation.application.ReservationCapacityExceededException;
@@ -200,6 +201,18 @@ public final class ApiExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 "ACTIVE_SESSION_NOT_FOUND",
                 "Active parking session not found",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(NoApplicableRatePlanException.class)
+    public ResponseEntity<ProblemDetail> handleMissingRatePlan(
+            NoApplicableRatePlanException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "RATE_PLAN_UNAVAILABLE",
+                "Rate plan unavailable",
                 exception.getMessage(),
                 request));
     }

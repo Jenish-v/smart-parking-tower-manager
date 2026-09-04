@@ -19,7 +19,7 @@ If the vehicle has a confirmed reservation whose arrival window contains the ent
 the reservation and returns its UUID in `reservationId`. The request size must match the reservation size. A walk-in
 entry returns `null` for that field.
 
-Exit completes the active session and releases its allocation:
+Exit calculates the charge, stores an immutable receipt, completes the active session, and releases its allocation:
 
 ```bash
 curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/exits \
@@ -31,6 +31,10 @@ curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e0
 
 Use a new UUID for each logical command. Retry the same command with the same identifier after a timeout or transient
 failure. Reusing an identifier with a different operation, facility, vehicle, or entry size returns a conflict.
+The completed response includes `receipt` with the applicable rate-plan version, billable duration, increment count,
+gross charge, cap discount, total, currency, and issue time. Monetary values are integer minor units. An exact retry
+returns the same session and receipt. If no plan applied when the vehicle entered, the entire exit rolls back and the
+API returns `RATE_PLAN_UNAVAILABLE`.
 
 Reservation creation puts the client-selected reservation UUID in the path:
 
@@ -100,8 +104,8 @@ Errors use `application/problem+json`. Every problem includes the RFC problem fi
 Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, `ACTIVE_SESSION_EXISTS`,
 `IDEMPOTENCY_CONFLICT`, `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `RESERVATION_CAPACITY_EXCEEDED`,
 `RESERVATION_SIZE_MISMATCH`, `OVERLAPPING_VEHICLE_RESERVATION`, `RESERVATION_IDENTIFIER_CONFLICT`,
-`INVALID_RESERVATION_STATE`,
-`RESERVATION_NOT_FOUND`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and `INTERNAL_ERROR`.
+`INVALID_RESERVATION_STATE`, `RESERVATION_NOT_FOUND`, `RATE_PLAN_UNAVAILABLE`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`,
+and `INTERNAL_ERROR`.
 
 ## Security boundary
 

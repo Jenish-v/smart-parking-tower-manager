@@ -16,7 +16,7 @@ public interface ParkingSessionService {
             VehicleIdentifier vehicleIdentifier,
             SizeClass requiredSize);
 
-    ParkingSession exit(
+    ParkingSessionExit exit(
             RequestId requestId,
             FacilityId facilityId,
             VehicleIdentifier vehicleIdentifier);

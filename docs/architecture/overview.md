@@ -70,8 +70,11 @@ increment, and a size-specific charge and rolling 24-hour cap. All size bands in
 calculation uses minor currency units, rounds billable time up to whole increments, and applies the cap separately to
 each rolling day. Quotes retain the plan identifier and version so a future receipt can reproduce the assessment.
 
-The module is currently framework independent and does not select or persist an active plan. Parking-session receipt
-integration, adjustments, API operations, and dashboard presentation remain Milestone 11 work.
+PostgreSQL stores rate-plan versions and prevents overlapping effective windows. Parking-session exit selects the plan
+effective at entry time, calculates the fee, and stores an immutable receipt before the outer transaction commits.
+Failure leaves the session and allocation active. The exit response includes the receipt breakdown, and an exact retry
+returns the same receipt. The dashboard presents the immediate receipt total and reference. Manual adjustments and
+receipt-history presentation remain Milestone 11 work.
 
 ## Data
 
