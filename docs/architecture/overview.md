@@ -73,8 +73,10 @@ each rolling day. Quotes retain the plan identifier and version so a future rece
 PostgreSQL stores rate-plan versions and prevents overlapping effective windows. Parking-session exit selects the plan
 effective at entry time, calculates the fee, and stores an immutable receipt before the outer transaction commits.
 Failure leaves the session and allocation active. The exit response includes the receipt breakdown, and an exact retry
-returns the same receipt. The dashboard presents the immediate receipt total and reference. Manual adjustments and
-receipt-history presentation remain Milestone 11 work.
+returns the same receipt. Vehicle history presents the immutable base receipt total. The receipt statement API appends
+reason-coded signed adjustments under a row lock, keeps the original receipt unchanged, and rejects a total below zero.
+Client-selected adjustment UUIDs provide durable replay detection. Operator references remain unverified caller labels
+until identity is implemented.
 
 ## Data
 
@@ -89,9 +91,9 @@ deletion policy for vehicle identifiers remains required before deployment.
 
 ## API and user interface
 
-The backend exposes versioned REST endpoints for parking entry, exit, active lookup, vehicle history, occupancy, and
-reservation operations. HTTP adapters call application interfaces and do not access persistence implementations. The
-OpenAPI 3.0 contract is served at `/openapi.yaml`.
+The backend exposes versioned REST endpoints for parking entry, exit, active lookup, vehicle history, occupancy,
+reservation operations, receipt statements, and fee adjustments. HTTP adapters call application interfaces and do not
+access persistence implementations. The OpenAPI 3.0 contract is served at `/openapi.yaml`.
 
 Errors use RFC problem details with stable codes. Parking-session mutations require UUID idempotency headers;
 reservation creation uses the client-selected path UUID for replay protection. Request validation runs at the HTTP

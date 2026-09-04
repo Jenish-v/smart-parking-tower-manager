@@ -102,6 +102,50 @@ paths:
                   $ref: '#/components/schemas/ParkingSession'
         '400':
           $ref: '#/components/responses/BadRequest'
+  /api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt:
+    get:
+      operationId: getReceiptStatement
+      summary: Get a parking receipt and its adjustment history
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Receipt statement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptStatement'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt/adjustments/{adjustmentId}:
+    put:
+      operationId: addFeeAdjustment
+      summary: Add or replay an immutable fee adjustment
+      description: The client-selected adjustment identifier makes an exact retry idempotent.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - $ref: '#/components/parameters/SessionId'
+        - $ref: '#/components/parameters/AdjustmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdjustFeeRequest'
+      responses:
+        '200':
+          description: Updated receipt statement or matching adjustment replayed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReceiptStatement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
   /api/v1/facilities/{facilityId}/reservations/{reservationId}:
     put:
       operationId: createReservation
@@ -250,6 +294,21 @@ components:
         minLength: 1
         maxLength: 32
       example: TOR 501
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    AdjustmentId:
+      name: adjustmentId
+      in: path
+      required: true
+      description: Client-selected UUID used to replay an exact adjustment safely.
+      schema:
+        type: string
+        format: uuid
   schemas:
     EntryParkingSessionRequest:
       type: object
@@ -445,6 +504,144 @@ components:
           type: string
           pattern: '^[A-Z]{3}$'
         issuedAt:
+          type: string
+          format: date-time
+    AdjustFeeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - amountMinor
+        - reason
+        - reasonDetail
+        - operatorReference
+      properties:
+        amountMinor:
+          type: integer
+          format: int64
+          minimum: -1000000000
+          maximum: 1000000000
+          description: Signed amount in receipt currency minor units. Zero is rejected.
+        reason:
+          type: string
+          enum:
+            - CUSTOMER_SERVICE
+            - RATE_CORRECTION
+            - OPERATIONAL_EXCEPTION
+            - OTHER
+        reasonDetail:
+          type: string
+          minLength: 1
+          maxLength: 240
+        operatorReference:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Unverified development identifier until authenticated identity is integrated.
+    ReceiptStatement:
+      type: object
+      required:
+        - receiptId
+        - sessionId
+        - ratePlanId
+        - ratePlanVersion
+        - sizeClass
+        - enteredAt
+        - exitedAt
+        - billableDuration
+        - billingIncrements
+        - grossChargeMinor
+        - capDiscountMinor
+        - baseTotalMinor
+        - adjustedTotalMinor
+        - currency
+        - issuedAt
+        - adjustments
+      properties:
+        receiptId:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        ratePlanId:
+          type: string
+          format: uuid
+        ratePlanVersion:
+          type: integer
+          format: int64
+        sizeClass:
+          type: string
+          enum:
+            - SMALL
+            - MEDIUM
+            - LARGE
+        enteredAt:
+          type: string
+          format: date-time
+        exitedAt:
+          type: string
+          format: date-time
+        billableDuration:
+          type: string
+          description: ISO 8601 duration after the grace period.
+        billingIncrements:
+          type: integer
+          format: int64
+          minimum: 0
+        grossChargeMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        capDiscountMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        baseTotalMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        adjustedTotalMinor:
+          type: integer
+          format: int64
+          minimum: 0
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        issuedAt:
+          type: string
+          format: date-time
+        adjustments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FeeAdjustment'
+    FeeAdjustment:
+      type: object
+      required:
+        - adjustmentId
+        - amountMinor
+        - reason
+        - reasonDetail
+        - operatorReference
+        - createdAt
+      properties:
+        adjustmentId:
+          type: string
+          format: uuid
+        amountMinor:
+          type: integer
+          format: int64
+        reason:
+          type: string
+          enum:
+            - CUSTOMER_SERVICE
+            - RATE_CORRECTION
+            - OPERATIONAL_EXCEPTION
+            - OTHER
+        reasonDetail:
+          type: string
+        operatorReference:
+          type: string
+        createdAt:
           type: string
           format: date-time
     Space:

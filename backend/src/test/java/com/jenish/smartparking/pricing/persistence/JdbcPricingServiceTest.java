@@ -4,10 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.jenish.smartparking.facility.domain.SizeClass;
+import com.jenish.smartparking.facility.domain.FacilityId;
+import com.jenish.smartparking.pricing.application.AdjustmentIdentifierConflictException;
+import com.jenish.smartparking.pricing.application.NegativeAdjustedTotalException;
 import com.jenish.smartparking.pricing.application.NoApplicableRatePlanException;
 import com.jenish.smartparking.pricing.application.PricingService;
 import com.jenish.smartparking.pricing.domain.Money;
 import com.jenish.smartparking.pricing.domain.ParkingReceipt;
+import com.jenish.smartparking.pricing.domain.AdjustmentReason;
+import com.jenish.smartparking.pricing.domain.ReceiptStatement;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -85,6 +90,72 @@ class JdbcPricingServiceTest {
                 """)
                 .param("id", UUID.randomUUID())
                 .update());
+    }
+
+    @Test
+    void persistsAndReplaysAReasonCodedAdjustment() {
+        Instant exitedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant enteredAt = exitedAt.minus(35, ChronoUnit.MINUTES);
+        UUID sessionId = insertSession(enteredAt, exitedAt);
+        pricingService.assess(sessionId, SizeClass.SMALL, enteredAt, exitedAt);
+        UUID adjustmentId = UUID.randomUUID();
+
+        ReceiptStatement adjusted = pricingService.adjust(
+                new FacilityId(FACILITY_ID),
+                sessionId,
+                adjustmentId,
+                -100,
+                AdjustmentReason.CUSTOMER_SERVICE,
+                "Validated service recovery",
+                "operator-1");
+        ReceiptStatement replay = pricingService.adjust(
+                new FacilityId(FACILITY_ID),
+                sessionId,
+                adjustmentId,
+                -100,
+                AdjustmentReason.CUSTOMER_SERVICE,
+                "Validated service recovery",
+                "operator-1");
+
+        assertEquals(adjusted, replay);
+        assertEquals(150, adjusted.adjustedTotalMinor());
+        assertEquals(1L, count("fee_adjustments"));
+        assertEquals(adjusted, pricingService.findStatement(new FacilityId(FACILITY_ID), sessionId));
+        assertEquals(1, pricingService.findReceipts(java.util.List.of(sessionId)).size());
+    }
+
+    @Test
+    void rejectsAdjustmentIdentifierReuseAndANegativeTotal() {
+        Instant exitedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant enteredAt = exitedAt.minus(35, ChronoUnit.MINUTES);
+        UUID sessionId = insertSession(enteredAt, exitedAt);
+        pricingService.assess(sessionId, SizeClass.SMALL, enteredAt, exitedAt);
+        UUID adjustmentId = UUID.randomUUID();
+        pricingService.adjust(
+                new FacilityId(FACILITY_ID),
+                sessionId,
+                adjustmentId,
+                -100,
+                AdjustmentReason.CUSTOMER_SERVICE,
+                "Validated service recovery",
+                "operator-1");
+
+        assertThrows(AdjustmentIdentifierConflictException.class, () -> pricingService.adjust(
+                new FacilityId(FACILITY_ID),
+                sessionId,
+                adjustmentId,
+                100,
+                AdjustmentReason.CUSTOMER_SERVICE,
+                "Validated service recovery",
+                "operator-1"));
+        assertThrows(NegativeAdjustedTotalException.class, () -> pricingService.adjust(
+                new FacilityId(FACILITY_ID),
+                sessionId,
+                UUID.randomUUID(),
+                -151,
+                AdjustmentReason.CUSTOMER_SERVICE,
+                "Excessive credit",
+                "operator-1"));
     }
 
     private UUID insertSession(Instant enteredAt, Instant exitedAt) {

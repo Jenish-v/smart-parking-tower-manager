@@ -46,6 +46,7 @@ class ParkingSessionApiTest {
 
     @BeforeEach
     void resetData() {
+        jdbcClient.sql("DELETE FROM fee_adjustments").update();
         jdbcClient.sql("DELETE FROM parking_receipts").update();
         jdbcClient.sql("DELETE FROM parking_session_requests").update();
         jdbcClient.sql("DELETE FROM parking_sessions").update();
@@ -159,6 +160,50 @@ class ParkingSessionApiTest {
     }
 
     @Test
+    void exposesReceiptHistoryAndIdempotentAdjustments() throws Exception {
+        activateSpace(1, "A", 1);
+        post(
+                "/entries",
+                UUID.randomUUID(),
+                """
+                {"vehicleIdentifier":"TOR 505","requiredSize":"SMALL"}
+                """);
+        post(
+                "/exits",
+                UUID.randomUUID(),
+                """
+                {"vehicleIdentifier":"TOR 505"}
+                """);
+        UUID sessionId = jdbcClient.sql("""
+                SELECT id FROM parking_sessions WHERE vehicle_identifier = 'TOR 505'
+                """).query(UUID.class).single();
+
+        HttpResponse<String> statement = getReceipt(sessionId);
+        assertEquals(200, statement.statusCode());
+        assertTrue(statement.body().contains("\"adjustedTotalMinor\":0"));
+
+        UUID adjustmentId = UUID.randomUUID();
+        String body = """
+                {
+                  "amountMinor":100,
+                  "reason":"OPERATIONAL_EXCEPTION",
+                  "reasonDetail":"Validated gate outage",
+                  "operatorReference":"operator-1"
+                }
+                """;
+        HttpResponse<String> adjusted = putAdjustment(sessionId, adjustmentId, body);
+        HttpResponse<String> replay = putAdjustment(sessionId, adjustmentId, body);
+
+        assertEquals(200, adjusted.statusCode());
+        assertEquals(adjusted.body(), replay.body());
+        assertTrue(adjusted.body().contains("\"adjustedTotalMinor\":100"));
+        assertTrue(adjusted.body().contains("\"reason\":\"OPERATIONAL_EXCEPTION\""));
+
+        HttpResponse<String> history = get("?vehicleIdentifier=TOR%20505");
+        assertTrue(history.body().contains("\"receiptId\":"));
+    }
+
+    @Test
     void publishesTheOpenApiContract() throws Exception {
         HttpRequest request = HttpRequest.newBuilder(uri("/openapi.yaml")).GET().build();
 
@@ -185,6 +230,26 @@ class ParkingSessionApiTest {
     private HttpResponse<String> get(String suffix) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(sessionUri(suffix)).GET().build();
         return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> getReceipt(UUID sessionId) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(receiptUri(sessionId)).GET().build();
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpResponse<String> putAdjustment(
+            UUID sessionId,
+            UUID adjustmentId,
+            String body) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(receiptUri(sessionId) + "/adjustments/" + adjustmentId))
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+        return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+    }
+
+    private URI receiptUri(UUID sessionId) {
+        return uri("/api/v1/facilities/" + FACILITY_ID + "/parking-sessions/" + sessionId + "/receipt");
     }
 
     private URI sessionUri(String suffix) {

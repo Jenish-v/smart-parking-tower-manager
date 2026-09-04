@@ -6,6 +6,9 @@ import com.jenish.smartparking.parkingsession.application.ActiveParkingSessionEx
 import com.jenish.smartparking.parkingsession.application.IdempotencyConflictException;
 import com.jenish.smartparking.parkingsession.application.NoActiveParkingSessionException;
 import com.jenish.smartparking.pricing.application.NoApplicableRatePlanException;
+import com.jenish.smartparking.pricing.application.AdjustmentIdentifierConflictException;
+import com.jenish.smartparking.pricing.application.NegativeAdjustedTotalException;
+import com.jenish.smartparking.pricing.application.ReceiptNotFoundException;
 import com.jenish.smartparking.reservation.application.OverlappingVehicleReservationException;
 import com.jenish.smartparking.reservation.application.ReservationArrivalSizeMismatchException;
 import com.jenish.smartparking.reservation.application.ReservationCapacityExceededException;
@@ -213,6 +216,42 @@ public final class ApiExceptionHandler {
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "RATE_PLAN_UNAVAILABLE",
                 "Rate plan unavailable",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(ReceiptNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleMissingReceipt(
+            ReceiptNotFoundException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.NOT_FOUND,
+                "RECEIPT_NOT_FOUND",
+                "Receipt not found",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(AdjustmentIdentifierConflictException.class)
+    public ResponseEntity<ProblemDetail> handleAdjustmentConflict(
+            AdjustmentIdentifierConflictException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "ADJUSTMENT_IDENTIFIER_CONFLICT",
+                "Adjustment identifier conflict",
+                exception.getMessage(),
+                request));
+    }
+
+    @ExceptionHandler(NegativeAdjustedTotalException.class)
+    public ResponseEntity<ProblemDetail> handleNegativeAdjustedTotal(
+            NegativeAdjustedTotalException exception,
+            HttpServletRequest request) {
+        return response(problem(
+                HttpStatus.CONFLICT,
+                "NEGATIVE_ADJUSTED_TOTAL",
+                "Invalid adjusted total",
                 exception.getMessage(),
                 request));
     }
