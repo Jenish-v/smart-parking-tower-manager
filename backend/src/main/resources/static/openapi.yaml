@@ -2,9 +2,11 @@ openapi: 3.0.3
 info:
   title: Smart Parking Tower Manager API
   version: 1.0.0
-  description: Versioned parking-session, reservation, and occupancy reporting operations.
+  description: Versioned parking, reservation, pricing, and occupancy operations secured by bearer JWTs.
 servers:
   - url: /
+security:
+  - bearerAuth: []
 paths:
   /api/v1/facilities/{facilityId}/parking-sessions/entries:
     post:
@@ -122,7 +124,7 @@ paths:
     put:
       operationId: addFeeAdjustment
       summary: Add or replay an immutable fee adjustment
-      description: The client-selected adjustment identifier makes an exact retry idempotent.
+      description: Requires ADMIN. The client-selected adjustment identifier makes an exact retry idempotent.
       parameters:
         - $ref: '#/components/parameters/FacilityId'
         - $ref: '#/components/parameters/SessionId'
@@ -261,6 +263,12 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token issued by the configured OpenID Connect provider.
   parameters:
     FacilityId:
       name: facilityId

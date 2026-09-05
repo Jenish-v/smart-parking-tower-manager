@@ -117,8 +117,13 @@ communication becomes necessary.
 
 ## Security
 
-The API and dashboard currently have no authentication or authorization. They must remain in a trusted development
-environment until the identity milestone implements and verifies those boundaries.
+The backend is a stateless OAuth 2.0 resource server. It validates bearer JWTs against a configured OpenID Connect issuer
+and maps the token's `roles` claim to operator and administrator authorities. Every versioned API operation requires one
+of those roles; fee adjustments require an administrator. Health probes and the OpenAPI document remain public.
+
+Security is enabled by default outside the local profile. Local Compose disables it until the dashboard implements the
+authorization-code flow with Proof Key for Code Exchange. Adjustment actor references are not yet derived from the
+authenticated principal, and append-only audit persistence remains unfinished.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
 approved before production readiness.
@@ -151,6 +156,7 @@ local test results.
 - [Reservation domain](reservation-domain.md)
 - [Pricing domain](pricing-domain.md)
 - [Occupancy reporting](occupancy-reporting.md)
+- [Identity and authorization](identity.md)
 - [API guide](../api/README.md)
 - [Frontend component standards](../frontend/component-standards.md)
 - [Persistence](persistence.md)

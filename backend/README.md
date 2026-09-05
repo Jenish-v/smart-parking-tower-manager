@@ -23,12 +23,16 @@ The service uses PostgreSQL. The default development connection is:
 DB_URL=jdbc:postgresql://localhost:5432/smart_parking
 DB_USERNAME=smart_parking
 DB_PASSWORD=smart_parking
+SECURITY_ENABLED=true
+OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
 ```
 
 Override every value through environment variables outside local development. Flyway applies the production schema
-from `src/main/resources/db/migration`.
+from `src/main/resources/db/migration`. Security is enabled by default and non-local startup fails without a discoverable
+OpenID Connect issuer. JWTs must contain a `roles` claim with `OPERATOR` or `ADMIN`.
 
-Activate the `local` profile to also load the 7,200-space reference fixture:
+Activate the `local` profile to load the 7,200-space reference fixture and disable authentication for self-contained
+development:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=local
@@ -55,6 +59,8 @@ claims against PostgreSQL. The suite also covers reservation cancellation, expir
 matching, including rollback when a matched arrival cannot obtain a space.
 Pricing tests cover grace, rounding, effective-window, size-rate, daily-cap, currency, overflow, persistence, receipt
 and adjustment replay, negative adjusted totals, and missing-plan rollback boundaries.
+Security tests cover public probes, missing authentication, role mapping, operator commands, and administrator-only fee
+adjustments.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run
@@ -88,6 +94,8 @@ GET  /api/v1/facilities/{facilityId}/reservations?vehicleIdentifier={value}
 
 Parking-session mutations require a UUID `Idempotency-Key` header. Reservation creation uses a client-selected UUID in
 the path and safely replays an identical request. Errors use `application/problem+json` and include a stable `code`
-property. Adjustment `operatorReference` values are caller-supplied labels until identity is implemented; they are not
-verified principals. The API currently has no authentication or authorization and must not be exposed as a production
-internet endpoint. Additional Actuator endpoints require an explicit architecture and security review.
+property. When security is enabled, all `/api/v1` calls require a bearer JWT. `OPERATOR` and `ADMIN` can use ordinary
+parking and reservation operations; only `ADMIN` can append fee adjustments. Adjustment `operatorReference` values are
+still caller-supplied labels and are not verified principals. The dashboard has no OIDC login flow yet, so the system
+must not be exposed as a production internet endpoint. Additional Actuator endpoints require an explicit architecture
+and security review.
