@@ -13,6 +13,11 @@ spring:
 server:
   shutdown: graceful
 
+smart-parking:
+  security:
+    enabled: ${SECURITY_ENABLED:true}
+    issuer-uri: ${OIDC_ISSUER_URI:}
+
 management:
   endpoint:
     health:

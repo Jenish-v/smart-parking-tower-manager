@@ -36,6 +36,10 @@ configure an appropriate cross-origin policy.
 The root `compose.yaml` builds the production frontend image, serves it through Nginx on `http://localhost:5173`, and
 proxies API, OpenAPI, and server-sent occupancy traffic to the backend service.
 
+The maintained local backend profile currently disables authentication. The dashboard does not yet acquire or attach
+OpenID Connect access tokens, so it cannot be used against a secured backend. Browser authorization-code integration is
+the next identity slice.
+
 ## Verification
 
 Run linting, component and client tests, TypeScript compilation, and the production build:

@@ -2,8 +2,9 @@
 
 ## Project status
 
-The project is pre-release. No production version is currently supported. The versioned parking API does not yet
-authenticate or authorize callers and must remain in a trusted development environment.
+The project is pre-release. No production version is currently supported. The backend can validate OpenID Connect
+access tokens and enforce operator and administrator roles, but local mode disables authentication and the dashboard
+does not yet perform browser login. Internet-facing deployment remains blocked.
 
 ## Reporting a vulnerability
 
@@ -28,6 +29,6 @@ published.
 - Database access must use parameterized queries or framework-managed bindings.
 - Dependency updates must pass automated tests before merge.
 - Logs must not contain passwords, tokens, payment details, or unnecessary personal data.
-- Public deployment is blocked until API authentication and authorization are implemented and verified.
+- Public deployment is blocked until browser authentication, audit history, and deployment controls are verified.
 
 Security controls described as planned are not considered active until they are implemented and verified.

@@ -3,6 +3,10 @@
 The backend exposes parking-session operations under `/api/v1`. The maintained OpenAPI 3.0 contract is
 `backend/src/main/resources/static/openapi.yaml` and is served at `GET /openapi.yaml`.
 
+With security enabled, every `/api/v1` request requires an access token issued by the configured OpenID Connect
+provider. Add `Authorization: Bearer <token>` to the examples below. Tokens need an `OPERATOR` or `ADMIN` value in the
+`roles` claim. Fee adjustments require `ADMIN`. Health probes and `/openapi.yaml` are public.
+
 ## Commands
 
 Entry starts a session and assigns the first compatible space:
@@ -125,10 +129,11 @@ Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, 
 `IDEMPOTENCY_CONFLICT`, `NO_COMPATIBLE_SPACE`, `ACTIVE_SESSION_NOT_FOUND`, `RESERVATION_CAPACITY_EXCEEDED`,
 `RESERVATION_SIZE_MISMATCH`, `OVERLAPPING_VEHICLE_RESERVATION`, `RESERVATION_IDENTIFIER_CONFLICT`,
 `INVALID_RESERVATION_STATE`, `RESERVATION_NOT_FOUND`, `RATE_PLAN_UNAVAILABLE`, `RECEIPT_NOT_FOUND`,
-`ADJUSTMENT_IDENTIFIER_CONFLICT`, `NEGATIVE_ADJUSTED_TOTAL`, `DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and
-`INTERNAL_ERROR`.
+`ADJUSTMENT_IDENTIFIER_CONFLICT`, `NEGATIVE_ADJUSTED_TOTAL`, `AUTHENTICATION_REQUIRED`, `ACCESS_DENIED`,
+`DATABASE_UNAVAILABLE`, `DATABASE_ERROR`, and `INTERNAL_ERROR`.
 
 ## Security boundary
 
-Authentication and authorization are not implemented. Run the API only in a trusted development environment until the
-identity milestone adds and verifies those controls.
+The backend validates issuer signatures and roles when security is enabled. The `local` profile disables enforcement so
+the current dashboard can run without an identity provider. Browser login and verified audit actors are not yet
+implemented; keep the local profile within a trusted development environment.

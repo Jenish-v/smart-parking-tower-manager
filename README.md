@@ -37,6 +37,7 @@ the public API through a typed transport boundary.
 | Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
 | Pricing | Persisted rate plans, deterministic fee calculation, immutable receipts, and reason-coded adjustments |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
+| Identity | OIDC bearer-JWT validation and operator/administrator API roles |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
@@ -48,12 +49,14 @@ cancellation against the public API. PostgreSQL serializes reservation capacity 
 atomically fulfills a matching claim during parking entry. Exit selects the plan that applied at entry time and stores
 an immutable receipt in the same transaction. Vehicle history presents completed-session receipt totals, while a
 receipt statement API exposes the original charge, append-only signed adjustments, and adjusted total. Adjustment
-commands are replay-safe and cannot reduce a statement below zero. Identity, verified adjustment actors, audit, and
-production deployment remain planned. Session, receipt, adjustment, and idempotency history is retained without
-automated deletion until a production retention policy is approved.
+commands are replay-safe and cannot reduce a statement below zero. The backend can validate OpenID Connect bearer
+tokens and separates operator access from administrator-only fee adjustments. Browser login, verified adjustment
+actors, audit, and production deployment remain planned. Session, receipt, adjustment, and idempotency history is
+retained without automated deletion until a production retention policy is approved.
 
-The API and dashboard do not yet authenticate or authorize callers. They are suitable for development and contract
-integration, not internet-facing production deployment.
+Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
+temporarily disables enforcement until browser login is integrated. It remains unsuitable for internet-facing
+deployment.
 
 ## Repository layout
 
@@ -94,6 +97,8 @@ From `backend/`, configure the database if it differs from the local defaults:
 DB_URL=jdbc:postgresql://localhost:5432/smart_parking
 DB_USERNAME=smart_parking
 DB_PASSWORD=smart_parking
+SECURITY_ENABLED=true
+OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
 ```
 
 Run the complete backend verification:
@@ -170,12 +175,14 @@ response, idempotency, and error behaviour.
 - [Parking sessions](docs/architecture/parking-sessions.md)
 - [Reservation domain](docs/architecture/reservation-domain.md)
 - [Pricing domain](docs/architecture/pricing-domain.md)
+- [Identity and authorization](docs/architecture/identity.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
 - [OpenAPI contract](backend/src/main/resources/static/openapi.yaml)
 - [Persistence](docs/architecture/persistence.md)
 - [Transactional locking decision](docs/decisions/0002-use-postgresql-row-locks-for-allocation.md)
+- [OIDC bearer-token decision](docs/decisions/0003-use-oidc-bearer-tokens.md)
 - [Delivery roadmap](docs/roadmap.md)
 - [Contribution guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
