@@ -8,11 +8,6 @@ interface ImportMetaEnv {
   readonly VITE_OIDC_SCOPE?: string
 }
 
-interface ImportMetaEnv {
-  readonly VITE_API_BASE_URL?: string
-  readonly VITE_FACILITY_ID?: string
-}
-
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }

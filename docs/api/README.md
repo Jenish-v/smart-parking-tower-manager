@@ -134,6 +134,7 @@ Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, 
 
 ## Security boundary
 
-The backend validates issuer signatures and roles when security is enabled. The `local` profile disables enforcement so
-the current dashboard can run without an identity provider. Browser login and verified audit actors are not yet
-implemented; keep the local profile within a trusted development environment.
+The backend validates issuer signatures and roles when security is enabled. Secured dashboard builds use authorization
+code flow with PKCE and attach the access token to API requests. The `local` profile disables enforcement so the stack
+can run without an identity provider. Verified audit actors are not yet implemented; keep the local profile within a
+trusted development environment.

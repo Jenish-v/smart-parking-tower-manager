@@ -123,9 +123,10 @@ issuer and maps the token's `roles` claim to operator and administrator authorit
 requires one of those roles; fee adjustments require an administrator. Health probes and the OpenAPI document remain
 public.
 
-Security is enabled by default outside the local profile. Local Compose disables it until the dashboard implements the
-authorization-code flow with Proof Key for Code Exchange. Adjustment actor references are not yet derived from the
-authenticated principal, and append-only audit persistence remains unfinished.
+Security is enabled by default outside the local profile. Secured dashboard builds use authorization code flow with
+Proof Key for Code Exchange; Local Compose disables authentication to avoid an external provider dependency.
+Adjustment actor references are not yet derived from the authenticated principal, and append-only audit persistence
+remains unfinished.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
 approved before production readiness.
