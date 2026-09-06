@@ -8,8 +8,12 @@ login session. Health probes and the OpenAPI document remain public. Every `/api
 principal.
 
 Security is enabled by default outside the `local` profile. Startup fails when no issuer URI is configured, preventing
-an accidentally anonymous non-local deployment. The maintained local profile disables enforcement so a fresh Docker
-Compose checkout remains self-contained while browser login integration is unfinished.
+an accidentally anonymous non-local deployment. The browser uses authorization code flow with PKCE, holds its OIDC user
+in session storage, and sends the access token as a bearer credential on JSON and server-sent stream requests. It does
+not store a client secret. Access-token expiry removes the active browser session and returns the operator to sign-in.
+
+The maintained local profile disables enforcement and the local frontend build omits OIDC settings so a fresh Docker
+Compose checkout remains self-contained.
 
 ## Roles
 
@@ -31,9 +35,12 @@ Set these variables for a secured runtime:
 ```text
 SECURITY_ENABLED=true
 OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
+VITE_OIDC_AUTHORITY=https://identity.example.com/realms/smart-parking
+VITE_OIDC_CLIENT_ID=smart-parking-dashboard
+VITE_OIDC_SCOPE=openid profile
 ```
 
-The issuer must publish standard OpenID Provider metadata and a JSON Web Key Set. Token acquisition, provider
-provisioning, dashboard authorization-code flow, facility-scoped claims, and durable audit records remain Milestone 12
-work. Until those pieces are implemented, the local dashboard is a development workflow and the system is not ready for
-an internet-facing deployment.
+The issuer must publish standard OpenID Provider metadata and a JSON Web Key Set. The public browser client must allow
+the dashboard callback and logout origins, require PKCE, and issue the backend-compatible `roles` claim. Provider
+provisioning, audience validation, facility-scoped claims, verified actors, and durable audit records remain Milestone
+12 work. Until those pieces are implemented, the system is not ready for an internet-facing deployment.

@@ -7,29 +7,11 @@ import {
   openOccupancyStream,
   type OccupancySnapshot,
 } from './parkingSessions'
-
-class FakeEventSource {
-  static latest: FakeEventSource
-
-  readonly close = vi.fn()
-  readonly url: string
-  private readonly listeners = new Map<string, EventListener[]>()
-
-  constructor(url: string | URL) {
-    this.url = url.toString()
-    FakeEventSource.latest = this
-  }
-
-  addEventListener(type: string, listener: EventListener) {
-    this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener])
-  }
-
-  emit(type: string, event: Event) {
-    this.listeners.get(type)?.forEach((listener) => listener(event))
-  }
-}
+import { setAccessTokenProvider } from './http'
 
 describe('parking session API client', () => {
+  afterEach(() => setAccessTokenProvider(() => null))
+
   it('encodes facility and vehicle identifiers for active lookup', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ sessionId: 'session-1' }), {
@@ -82,6 +64,21 @@ describe('parking session API client', () => {
     expect(options?.body).toBe(JSON.stringify({ vehicleIdentifier: 'TOR 501', requiredSize: 'MEDIUM' }))
   })
 
+  it('attaches the current bearer token to API requests', async () => {
+    setAccessTokenProvider(() => 'access-token')
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'session-1' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+
+    await findActiveSession('facility-1', 'TOR 501')
+
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Authorization'))
+      .toBe('Bearer access-token')
+  })
+
   it('requests an abortable occupancy snapshot', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ facilityId: 'facility-1', floors: [] }), {
@@ -122,8 +119,8 @@ describe('parking session API client', () => {
     expect(options?.body).toBe(JSON.stringify(command))
   })
 
-  it('opens and closes the facility occupancy stream', () => {
-    vi.stubGlobal('EventSource', FakeEventSource)
+  it('opens an authenticated facility occupancy stream and parses events', async () => {
+    setAccessTokenProvider(() => 'stream-token')
     const onSnapshot = vi.fn()
     const onConnectionChange = vi.fn()
     const streamed: OccupancySnapshot = {
@@ -136,18 +133,25 @@ describe('parking session API client', () => {
       floors: [],
     }
 
-    const close = openOccupancyStream('facility/one', onSnapshot, onConnectionChange)
-    FakeEventSource.latest.emit('open', new Event('open'))
-    FakeEventSource.latest.emit(
-      'occupancy',
-      new MessageEvent('occupancy', { data: JSON.stringify(streamed) }),
+    const encoder = new TextEncoder()
+    let releaseStream: (() => void) | undefined
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode(`event: occupancy\ndata: ${JSON.stringify(streamed)}\n\n`))
+        releaseStream = () => controller.close()
+      },
+    })
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(body, { status: 200, headers: { 'Content-Type': 'text/event-stream' } }),
     )
+    const close = openOccupancyStream('facility/one', onSnapshot, onConnectionChange)
 
-    expect(FakeEventSource.latest.url).toBe('/api/v1/facilities/facility%2Fone/occupancy/stream')
+    await vi.waitFor(() => expect(onSnapshot).toHaveBeenCalledWith(streamed))
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/facilities/facility%2Fone/occupancy/stream')
+    expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('Authorization')).toBe('Bearer stream-token')
     expect(onConnectionChange).toHaveBeenCalledWith(true)
-    expect(onSnapshot).toHaveBeenCalledWith(streamed)
     close()
-    expect(FakeEventSource.latest.close).toHaveBeenCalledOnce()
-    vi.unstubAllGlobals()
+    releaseStream?.()
   })
 })

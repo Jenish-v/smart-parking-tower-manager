@@ -37,7 +37,7 @@ the public API through a typed transport boundary.
 | Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
 | Pricing | Persisted rate plans, deterministic fee calculation, immutable receipts, and reason-coded adjustments |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
-| Identity | OIDC bearer-JWT validation and operator/administrator API roles |
+| Identity | OIDC PKCE login, bearer-JWT validation, and operator/administrator API roles |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
@@ -49,14 +49,16 @@ cancellation against the public API. PostgreSQL serializes reservation capacity 
 atomically fulfills a matching claim during parking entry. Exit selects the plan that applied at entry time and stores
 an immutable receipt in the same transaction. Vehicle history presents completed-session receipt totals, while a
 receipt statement API exposes the original charge, append-only signed adjustments, and adjusted total. Adjustment
-commands are replay-safe and cannot reduce a statement below zero. The backend can validate OpenID Connect bearer
-tokens and separates operator access from administrator-only fee adjustments. Browser login, verified adjustment
-actors, audit, and production deployment remain planned. Session, receipt, adjustment, and idempotency history is
+commands are replay-safe and cannot reduce a statement below zero. The dashboard uses OpenID Connect authorization code
+flow with PKCE, stores its session in browser session storage, and attaches the current access token to API and streamed
+occupancy requests. The backend validates the token and separates operator access from administrator-only fee
+adjustments. Verified adjustment actors, audit, and production deployment remain planned. Session, receipt, adjustment,
+and idempotency history is
 retained without automated deletion until a production retention policy is approved.
 
 Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
-temporarily disables enforcement until browser login is integrated. It remains unsuitable for internet-facing
-deployment.
+disables enforcement and omits browser OIDC configuration so it does not depend on an external provider. It remains
+unsuitable for internet-facing deployment until verified audit actors and production hardening are complete.
 
 ## Repository layout
 
@@ -127,8 +129,9 @@ npm run dev
 ```
 
 The dashboard listens on port 5173. Its development server proxies API requests to the backend on port 8080. It uses the
-reference facility by default; set `VITE_FACILITY_ID` to target another configured facility. Run the frontend lint,
-test, type-check, and production-build sequence with:
+reference facility by default; set `VITE_FACILITY_ID` to target another configured facility. Secured builds also require
+`VITE_OIDC_AUTHORITY` and `VITE_OIDC_CLIENT_ID`; see the frontend guide for provider registration and optional scope
+configuration. Run the frontend lint, test, type-check, and production-build sequence with:
 
 ```bash
 npm run check
@@ -145,7 +148,7 @@ See [frontend/README.md](frontend/README.md) for configuration and individual co
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions/active` | Find the active session |
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions` | List vehicle history |
 | GET | `/api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt` | Get a receipt statement |
-| PUT | `/api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt/adjustments/{adjustmentId}` | Append an adjustment |
+| PUT | `/api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt/adjustments/{adjustmentId}` | Adjust |
 | GET | `/api/v1/facilities/{facilityId}/occupancy` | Get facility and floor occupancy snapshot |
 | GET | `/api/v1/facilities/{facilityId}/occupancy/stream` | Stream changed occupancy snapshots |
 | PUT | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Create or replay a reservation |

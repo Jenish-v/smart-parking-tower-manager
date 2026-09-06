@@ -1,4 +1,4 @@
-import { apiUrl, request } from './http'
+import { apiUrl, authorizedHeaders, request } from './http'
 
 export { ApiError } from './http'
 
@@ -174,16 +174,61 @@ export function openOccupancyStream(
   onConnectionChange: (connected: boolean) => void,
 ) {
   const path = `/api/v1/facilities/${encodeURIComponent(facilityId)}/occupancy/stream`
-  const source = new EventSource(apiUrl(path))
-  source.addEventListener('occupancy', (event) => {
+  let controller = new AbortController()
+  let reconnectTimer: number | null = null
+  let closed = false
+
+  const connect = async () => {
+    controller = new AbortController()
     try {
-      onSnapshot(JSON.parse((event as MessageEvent<string>).data) as OccupancySnapshot)
+      const response = await fetch(apiUrl(path), {
+        headers: authorizedHeaders({ Accept: 'text/event-stream' }),
+        signal: controller.signal,
+      })
+      if (!response.ok || !response.body) {
+        throw new Error(`Occupancy stream returned HTTP ${response.status}.`)
+      }
+      onConnectionChange(true)
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (!closed) {
+        const { done, value } = await reader.read()
+        if (done) {
+          throw new Error('Occupancy stream closed.')
+        }
+        buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n')
+        let boundary = buffer.indexOf('\n\n')
+        while (boundary >= 0) {
+          const frame = buffer.slice(0, boundary)
+          buffer = buffer.slice(boundary + 2)
+          const lines = frame.split('\n')
+          const eventName = lines.find((line) => line.startsWith('event:'))?.slice(6).trim()
+          const data = lines
+            .filter((line) => line.startsWith('data:'))
+            .map((line) => line.slice(5).trimStart())
+            .join('\n')
+          if (eventName === 'occupancy' && data) {
+            onSnapshot(JSON.parse(data) as OccupancySnapshot)
+          }
+          boundary = buffer.indexOf('\n\n')
+        }
+      }
     } catch {
-      source.close()
+      if (closed || controller.signal.aborted) {
+        return
+      }
       onConnectionChange(false)
+      reconnectTimer = window.setTimeout(() => void connect(), 3_000)
     }
-  })
-  source.addEventListener('open', () => onConnectionChange(true))
-  source.addEventListener('error', () => onConnectionChange(false))
-  return () => source.close()
+  }
+
+  void connect()
+  return () => {
+    closed = true
+    controller.abort()
+    if (reconnectTimer !== null) {
+      window.clearTimeout(reconnectTimer)
+    }
+  }
 }

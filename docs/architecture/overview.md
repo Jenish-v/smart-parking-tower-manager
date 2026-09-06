@@ -112,14 +112,16 @@ The dashboard preserves the last successful response, falls back to 15-second po
 manual refresh control.
 
 The Vite development server proxies same-origin API paths to the backend. A separately hosted deployment must explicitly
-configure the API base URL and cross-origin policy. Live updates will use server-sent events unless bidirectional
-communication becomes necessary.
+configure the API base URL and cross-origin policy. Secured builds use OpenID Connect authorization code flow with PKCE
+and attach the current bearer token to JSON and fetch-based server-sent stream requests. Live updates use server-sent
+events unless bidirectional communication becomes necessary.
 
 ## Security
 
-The backend is a stateless OAuth 2.0 resource server. It validates bearer JWTs against a configured OpenID Connect issuer
-and maps the token's `roles` claim to operator and administrator authorities. Every versioned API operation requires one
-of those roles; fee adjustments require an administrator. Health probes and the OpenAPI document remain public.
+The backend is a stateless OAuth 2.0 resource server. It validates bearer JWTs against a configured OpenID Connect
+issuer and maps the token's `roles` claim to operator and administrator authorities. Every versioned API operation
+requires one of those roles; fee adjustments require an administrator. Health probes and the OpenAPI document remain
+public.
 
 Security is enabled by default outside the local profile. Local Compose disables it until the dashboard implements the
 authorization-code flow with Proof Key for Code Exchange. Adjustment actor references are not yet derived from the
