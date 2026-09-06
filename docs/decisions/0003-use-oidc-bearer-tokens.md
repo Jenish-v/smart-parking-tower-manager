@@ -16,7 +16,7 @@ OpenID Connect issuer. Application roles come from the token's `roles` claim. `O
 reservation work; `ADMIN` adds sensitive fee adjustment access.
 
 Provider selection and provisioning remain deployment concerns. The backend depends only on issuer discovery and
-standard JWT validation. Browser authentication will use the authorization-code flow with Proof Key for Code Exchange.
+standard JWT validation. Browser authentication uses authorization code flow with Proof Key for Code Exchange.
 
 ## Consequences
 

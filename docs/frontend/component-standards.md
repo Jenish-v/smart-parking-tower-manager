@@ -9,6 +9,8 @@ These rules keep browser concerns outside backend modules and make operator stat
 - `src/components` contains reusable presentation and layout components. Components receive data through typed props.
 - `src/api` owns HTTP paths, transport types, and RFC problem response handling. Components do not call `fetch`
   directly.
+- `src/auth` owns browser OIDC lifecycle and exposes identity state through context. Pages do not read token storage or
+  construct authorization headers.
 - Backend domain types are represented by frontend transport types; backend source code is not imported or duplicated as
   executable logic.
 
@@ -27,6 +29,10 @@ instead of predicting a terminal state in the browser.
 
 Exit results render monetary totals from the server receipt in currency minor units. The browser does not repeat fee
 calculation or infer a total from timestamps. Receipt-history navigation remains a separate workflow.
+
+Secured requests obtain the current access token at request time. Tokens remain in session storage, never enter URLs or
+logs, and are not copied into application persistence. Native `EventSource` is not used because it cannot set the bearer
+header; the API layer parses the server-sent response from authenticated `fetch` instead.
 
 ## Testing
 

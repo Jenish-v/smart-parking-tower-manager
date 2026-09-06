@@ -28,7 +28,7 @@ OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
 ```
 
 Override every value through environment variables outside local development. Flyway applies the production schema
-from `src/main/resources/db/migration`. Security is enabled by default and non-local startup fails without a discoverable
+from `src/main/resources/db/migration`. Security is enabled by default. Non-local startup fails without a discoverable
 OpenID Connect issuer. JWTs must contain a `roles` claim with `OPERATOR` or `ADMIN`.
 
 Activate the `local` profile to load the 7,200-space reference fixture and disable authentication for self-contained
@@ -96,6 +96,6 @@ Parking-session mutations require a UUID `Idempotency-Key` header. Reservation c
 the path and safely replays an identical request. Errors use `application/problem+json` and include a stable `code`
 property. When security is enabled, all `/api/v1` calls require a bearer JWT. `OPERATOR` and `ADMIN` can use ordinary
 parking and reservation operations; only `ADMIN` can append fee adjustments. Adjustment `operatorReference` values are
-still caller-supplied labels and are not verified principals. The dashboard has no OIDC login flow yet, so the system
-must not be exposed as a production internet endpoint. Additional Actuator endpoints require an explicit architecture
-and security review.
+still caller-supplied labels and are not verified principals. The dashboard can acquire a token through authorization
+code flow with PKCE, but the system must not be exposed as a production internet endpoint until audit records use the
+verified principal. Additional Actuator endpoints require an explicit architecture and security review.

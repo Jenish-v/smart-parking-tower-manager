@@ -3,8 +3,9 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-Milestones 1 through 11 are implemented. Milestone 12 is in progress: OIDC bearer-token validation and API role
-boundaries are implemented. Browser login, verified actors, and append-only audit history remain.
+Milestones 1 through 11 are implemented. Milestone 12 is in progress: OIDC bearer-token validation, API role boundaries,
+browser authorization-code login, and authenticated API transport are implemented. Verified actors and append-only
+audit history remain.
 
 The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
 operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria
@@ -89,7 +90,7 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 ## Milestone 12: Identity and audit
 
-- Integrate OpenID Connect. Backend implemented; dashboard pending.
+- Integrate OpenID Connect. Backend and dashboard implemented.
 - Add operator and administrator roles. Backend implemented.
 - Record sensitive actions in append-only audit history.
 - Test authentication and authorization boundaries.

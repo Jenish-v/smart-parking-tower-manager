@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 
+import { useAuth } from '../auth/AuthContext'
+
 const navigation = [
   { to: '/', label: 'Overview', end: true },
   { to: '/operations', label: 'Parking operations' },
@@ -8,6 +10,8 @@ const navigation = [
 ]
 
 export function AppShell() {
+  const { enabled, user, signOut } = useAuth()
+  const displayName = user?.profile.name ?? user?.profile.preferred_username ?? user?.profile.sub
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -19,7 +23,10 @@ export function AppShell() {
         </div>
         <div className="environment-status">
           <span className="status-dot" aria-hidden="true" />
-          Development
+          {enabled ? displayName : 'Local development'}
+          {enabled && (
+            <button className="sign-out-button" type="button" onClick={() => void signOut()}>Sign out</button>
+          )}
         </div>
       </header>
       <aside className="sidebar" aria-label="Primary navigation">
