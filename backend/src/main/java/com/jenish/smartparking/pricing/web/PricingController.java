@@ -1,11 +1,13 @@
 package com.jenish.smartparking.pricing.web;
 
 import com.jenish.smartparking.facility.domain.FacilityId;
+import com.jenish.smartparking.identity.ActorIdentityResolver;
 import com.jenish.smartparking.pricing.application.PricingService;
 import com.jenish.smartparking.pricing.domain.AdjustmentReason;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -19,8 +21,13 @@ public final class PricingController {
 
     private final PricingService pricingService;
 
-    public PricingController(@Lazy PricingService pricingService) {
+    private final ActorIdentityResolver actorIdentities;
+
+    public PricingController(
+            @Lazy PricingService pricingService,
+            ActorIdentityResolver actorIdentities) {
         this.pricingService = pricingService;
+        this.actorIdentities = actorIdentities;
     }
 
     @GetMapping
@@ -37,7 +44,9 @@ public final class PricingController {
             @PathVariable UUID facilityId,
             @PathVariable UUID sessionId,
             @PathVariable UUID adjustmentId,
+            Authentication authentication,
             @Valid @RequestBody AdjustFeeRequest request) {
+        String actorSubject = actorIdentities.resolve(authentication).subject();
         return ReceiptStatementResponse.from(pricingService.adjust(
                 new FacilityId(facilityId),
                 sessionId,
@@ -45,6 +54,6 @@ public final class PricingController {
                 request.amountMinor(),
                 AdjustmentReason.valueOf(request.reason()),
                 request.reasonDetail(),
-                request.operatorReference()));
+                actorSubject));
     }
 }

@@ -44,11 +44,11 @@ returns the same receipt.
 
 Vehicle history includes the immutable base receipt for a completed session. A separate receipt statement contains the
 base total, signed adjustments, and current adjusted total. Adjustments are append-only and require a client-selected
-UUID, signed minor-unit amount, reason code, reason detail, operator reference, and creation time. Replaying identical
-facts under the same UUID returns the existing statement; changing any fact returns a conflict. An adjustment cannot
-reduce the statement below zero.
+UUID, signed minor-unit amount, reason code, reason detail, authenticated actor subject, and creation time. Replaying
+identical facts under the same UUID returns the existing statement; changing any fact returns a conflict. An adjustment
+cannot reduce the statement below zero.
 
-The base receipt remains unchanged so its rate-plan calculation can always be reproduced. An operator reference is an
-unverified caller-supplied label until identity is implemented. Rate-plan administration APIs, tax handling, and
-refund settlement are not implemented. Payment processing is outside the current roadmap; receipts and adjustments
-record assessed fees and corrections but do not claim payment or refund settlement.
+The base receipt remains unchanged so its rate-plan calculation can always be reproduced. The API derives the actor
+subject from the validated JWT and appends an audit event in the same transaction. Rate-plan administration APIs, tax
+handling, and refund settlement are not implemented. Payment processing is outside the current roadmap; receipts and
+adjustments record assessed fees and corrections but do not claim payment or refund settlement.

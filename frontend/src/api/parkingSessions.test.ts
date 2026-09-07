@@ -106,7 +106,6 @@ describe('parking session API client', () => {
       amountMinor: -100,
       reason: 'CUSTOMER_SERVICE' as const,
       reasonDetail: 'Validated service recovery',
-      operatorReference: 'operator-1',
     }
 
     await adjustFee('facility/one', 'session/one', 'adjustment/one', command)

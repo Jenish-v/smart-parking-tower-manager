@@ -32,5 +32,5 @@ public interface PricingService {
             long amountMinor,
             AdjustmentReason reason,
             String reasonDetail,
-            String operatorReference);
+            String actorSubject);
 }

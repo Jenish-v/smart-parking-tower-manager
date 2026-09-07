@@ -51,7 +51,7 @@ public record ReceiptStatementResponse(
             long amountMinor,
             String reason,
             String reasonDetail,
-            String operatorReference,
+            String actorSubject,
             Instant createdAt) {
 
         private static AdjustmentResponse from(FeeAdjustment adjustment) {
@@ -60,7 +60,7 @@ public record ReceiptStatementResponse(
                     adjustment.amountMinor(),
                     adjustment.reason().name(),
                     adjustment.reasonDetail(),
-                    adjustment.operatorReference(),
+                    adjustment.actorSubject(),
                     adjustment.createdAt());
         }
     }

@@ -5,7 +5,7 @@ The backend exposes parking-session operations under `/api/v1`. The maintained O
 
 With security enabled, every `/api/v1` request requires an access token issued by the configured OpenID Connect
 provider. Add `Authorization: Bearer <token>` to the examples below. Tokens need an `OPERATOR` or `ADMIN` value in the
-`roles` claim. Fee adjustments require `ADMIN`. Health probes and `/openapi.yaml` are public.
+`roles` claim. Fee adjustments and audit history require `ADMIN`. Health probes and `/openapi.yaml` are public.
 
 ## Commands
 
@@ -84,12 +84,19 @@ Append a signed adjustment with a client-selected UUID. The base receipt is neve
 curl -i http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/parking-sessions/0ade0191-8373-4ff1-ae23-c998b00f8d5c/receipt/adjustments/10a87fd2-d22b-41bd-bba9-b1fbe13297f7 \
   -X PUT \
   -H 'Content-Type: application/json' \
-  -d '{"amountMinor":-100,"reason":"CUSTOMER_SERVICE","reasonDetail":"Validated service recovery","operatorReference":"operator-1"}'
+  -d '{"amountMinor":-100,"reason":"CUSTOMER_SERVICE","reasonDetail":"Validated service recovery"}'
 ```
 
 Amounts use signed integer minor units. Reasons are `CUSTOMER_SERVICE`, `RATE_CORRECTION`, `OPERATIONAL_EXCEPTION`, or
 `OTHER`. An identical adjustment UUID and body is replay-safe; reusing the UUID for different facts returns a conflict.
-The adjusted total cannot be negative. `operatorReference` is an unverified label until authentication is implemented.
+The adjusted total cannot be negative. The service derives `actorSubject` from the access token subject and writes an
+append-only audit event in the adjustment transaction. Local mode uses `local-development` as the explicit actor.
+
+Administrators can page through facility audit history with an exclusive timestamp cursor:
+
+```bash
+curl 'http://localhost:8080/api/v1/facilities/d936bb7d-3027-47aa-a47b-d04a37e07310/audit-events?limit=100'
+```
 
 Reservation lookup uses its UUID. Reservation history is ordered by newest creation first:
 
@@ -136,5 +143,5 @@ Current codes are `VALIDATION_FAILED`, `FACILITY_NOT_FOUND`, `INVALID_REQUEST`, 
 
 The backend validates issuer signatures and roles when security is enabled. Secured dashboard builds use authorization
 code flow with PKCE and attach the access token to API requests. The `local` profile disables enforcement so the stack
-can run without an identity provider. Verified audit actors are not yet implemented; keep the local profile within a
-trusted development environment.
+can run without an identity provider. Audited secured commands use the token subject; keep local mode within a trusted
+development environment.

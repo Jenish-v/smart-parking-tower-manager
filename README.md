@@ -37,7 +37,7 @@ the public API through a typed transport boundary.
 | Reservations | Capacity-safe claims, API and dashboard workflows, and atomic arrival fulfillment |
 | Pricing | Persisted rate plans, deterministic fee calculation, immutable receipts, and reason-coded adjustments |
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
-| Identity | OIDC PKCE login, bearer-JWT validation, and operator/administrator API roles |
+| Identity and audit | OIDC PKCE login, API roles, verified actors, and append-only audit history |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
@@ -52,13 +52,14 @@ receipt statement API exposes the original charge, append-only signed adjustment
 commands are replay-safe and cannot reduce a statement below zero. The dashboard uses OpenID Connect authorization code
 flow with PKCE, stores its session in browser session storage, and attaches the current access token to API and streamed
 occupancy requests. The backend validates the token and separates operator access from administrator-only fee
-adjustments. Verified adjustment actors, audit, and production deployment remain planned. Session, receipt, adjustment,
-and idempotency history is
-retained without automated deletion until a production retention policy is approved.
+adjustments. Fee adjustments derive the actor from the validated token subject and append an immutable audit event in
+the same transaction. Administrators can inspect facility audit history through the API. Production deployment remains
+planned. Session, receipt, adjustment, audit, and idempotency histories are retained without automated deletion until a
+production retention policy is approved.
 
 Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
 disables enforcement and omits browser OIDC configuration so it does not depend on an external provider. It remains
-unsuitable for internet-facing deployment until verified audit actors and production hardening are complete.
+unsuitable for internet-facing deployment until operational and security hardening are complete.
 
 ## Repository layout
 
@@ -151,6 +152,7 @@ See [frontend/README.md](frontend/README.md) for configuration and individual co
 | PUT | `/api/v1/facilities/{facilityId}/parking-sessions/{sessionId}/receipt/adjustments/{adjustmentId}` | Adjust |
 | GET | `/api/v1/facilities/{facilityId}/occupancy` | Get facility and floor occupancy snapshot |
 | GET | `/api/v1/facilities/{facilityId}/occupancy/stream` | Stream changed occupancy snapshots |
+| GET | `/api/v1/facilities/{facilityId}/audit-events` | List administrator audit history |
 | PUT | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Create or replay a reservation |
 | GET | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Get a reservation |
 | DELETE | `/api/v1/facilities/{facilityId}/reservations/{reservationId}` | Cancel or replay cancellation |
@@ -179,6 +181,7 @@ response, idempotency, and error behaviour.
 - [Reservation domain](docs/architecture/reservation-domain.md)
 - [Pricing domain](docs/architecture/pricing-domain.md)
 - [Identity and authorization](docs/architecture/identity.md)
+- [Audit history](docs/architecture/audit-history.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)

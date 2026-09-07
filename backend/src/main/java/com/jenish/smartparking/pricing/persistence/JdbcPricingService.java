@@ -1,5 +1,9 @@
 package com.jenish.smartparking.pricing.persistence;
 
+import com.jenish.smartparking.audit.application.AuditEventRecorder;
+import com.jenish.smartparking.audit.domain.AuditAction;
+import com.jenish.smartparking.audit.domain.AuditEvent;
+import com.jenish.smartparking.audit.domain.AuditTargetType;
 import com.jenish.smartparking.facility.domain.SizeClass;
 import com.jenish.smartparking.facility.domain.FacilityId;
 import com.jenish.smartparking.pricing.application.AdjustmentIdentifierConflictException;
@@ -70,20 +74,32 @@ public final class JdbcPricingService implements PricingService {
 
     private final TransactionOperations transactions;
 
+    private final AuditEventRecorder auditEvents;
+
     @Autowired
     public JdbcPricingService(
             JdbcClient jdbcClient,
-            PlatformTransactionManager transactionManager) {
-        this(jdbcClient, Clock.systemUTC(), new TransactionTemplate(transactionManager));
+            PlatformTransactionManager transactionManager,
+            AuditEventRecorder auditEvents) {
+        this(jdbcClient, Clock.systemUTC(), new TransactionTemplate(transactionManager), auditEvents);
     }
 
     JdbcPricingService(
             JdbcClient jdbcClient,
             Clock clock,
             TransactionOperations transactions) {
+        this(jdbcClient, clock, transactions, event -> { });
+    }
+
+    JdbcPricingService(
+            JdbcClient jdbcClient,
+            Clock clock,
+            TransactionOperations transactions,
+            AuditEventRecorder auditEvents) {
         this.jdbcClient = Objects.requireNonNull(jdbcClient, "jdbcClient must not be null");
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.transactions = Objects.requireNonNull(transactions, "transactions must not be null");
+        this.auditEvents = Objects.requireNonNull(auditEvents, "auditEvents must not be null");
     }
 
     @Override
@@ -154,7 +170,7 @@ public final class JdbcPricingService implements PricingService {
             long amountMinor,
             AdjustmentReason reason,
             String reasonDetail,
-            String operatorReference) {
+            String actorSubject) {
         requireFacilityAndSession(facilityId, sessionId);
         Objects.requireNonNull(adjustmentId, "adjustmentId must not be null");
         Objects.requireNonNull(reason, "reason must not be null");
@@ -165,7 +181,7 @@ public final class JdbcPricingService implements PricingService {
                 amountMinor,
                 reason,
                 reasonDetail,
-                operatorReference));
+                actorSubject));
     }
 
     private ReceiptStatement adjustOnce(
@@ -175,7 +191,7 @@ public final class JdbcPricingService implements PricingService {
             long amountMinor,
             AdjustmentReason reason,
             String reasonDetail,
-            String operatorReference) {
+            String actorSubject) {
         lockAdjustmentIdentifier(adjustmentId);
         ParkingReceipt receipt = lockFacilityReceipt(facilityId, sessionId)
                 .orElseThrow(() -> new ReceiptNotFoundException(sessionId));
@@ -185,7 +201,7 @@ public final class JdbcPricingService implements PricingService {
                 amountMinor,
                 reason,
                 reasonDetail,
-                operatorReference,
+                actorSubject,
                 now());
         Optional<FeeAdjustment> existing = findAdjustment(adjustmentId);
         if (existing.isPresent()) {
@@ -198,6 +214,14 @@ public final class JdbcPricingService implements PricingService {
             throw new NegativeAdjustedTotalException();
         }
         insertAdjustment(requested);
+        auditEvents.record(new AuditEvent(
+                UUID.randomUUID(),
+                facilityId,
+                requested.actorSubject(),
+                AuditAction.FEE_ADJUSTMENT_APPENDED,
+                AuditTargetType.RECEIPT,
+                receipt.id(),
+                requested.createdAt()));
         adjustments.add(requested);
         return ReceiptStatement.from(receipt, adjustments);
     }
@@ -210,7 +234,7 @@ public final class JdbcPricingService implements PricingService {
                 || existing.amountMinor() != requested.amountMinor()
                 || existing.reason() != requested.reason()
                 || !existing.reasonDetail().equals(requested.reasonDetail())
-                || !existing.operatorReference().equals(requested.operatorReference())) {
+                || !existing.actorSubject().equals(requested.actorSubject())) {
             throw new AdjustmentIdentifierConflictException(requested.id());
         }
         return ReceiptStatement.from(receipt, findAdjustments(receipt.id()));
@@ -357,7 +381,7 @@ public final class JdbcPricingService implements PricingService {
                        amount_minor,
                        reason,
                        reason_detail,
-                       operator_reference,
+                       actor_subject,
                        created_at
                 FROM fee_adjustments
                 WHERE receipt_id = :receiptId
@@ -375,7 +399,7 @@ public final class JdbcPricingService implements PricingService {
                        amount_minor,
                        reason,
                        reason_detail,
-                       operator_reference,
+                       actor_subject,
                        created_at
                 FROM fee_adjustments
                 WHERE id = :adjustmentId
@@ -400,10 +424,10 @@ public final class JdbcPricingService implements PricingService {
         jdbcClient.sql("""
                 INSERT INTO fee_adjustments (
                     id, receipt_id, amount_minor, reason,
-                    reason_detail, operator_reference, created_at
+                    reason_detail, actor_subject, created_at
                 ) VALUES (
                     :id, :receiptId, :amountMinor, :reason,
-                    :reasonDetail, :operatorReference, :createdAt
+                    :reasonDetail, :actorSubject, :createdAt
                 )
                 """)
                 .param("id", adjustment.id())
@@ -411,7 +435,7 @@ public final class JdbcPricingService implements PricingService {
                 .param("amountMinor", adjustment.amountMinor())
                 .param("reason", adjustment.reason().name())
                 .param("reasonDetail", adjustment.reasonDetail())
-                .param("operatorReference", adjustment.operatorReference())
+                .param("actorSubject", adjustment.actorSubject())
                 .param("createdAt", databaseTime(adjustment.createdAt()))
                 .update();
     }
@@ -445,7 +469,7 @@ public final class JdbcPricingService implements PricingService {
                 resultSet.getLong("amount_minor"),
                 AdjustmentReason.valueOf(resultSet.getString("reason")),
                 resultSet.getString("reason_detail"),
-                resultSet.getString("operator_reference"),
+                resultSet.getString("actor_subject"),
                 resultSet.getObject("created_at", OffsetDateTime.class).toInstant());
     }
 

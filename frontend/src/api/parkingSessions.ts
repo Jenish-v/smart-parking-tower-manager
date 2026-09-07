@@ -25,7 +25,7 @@ export interface FeeAdjustment {
   amountMinor: number
   reason: AdjustmentReason
   reasonDetail: string
-  operatorReference: string
+  actorSubject: string
   createdAt: string
 }
 
@@ -52,7 +52,6 @@ export interface FeeAdjustmentCommand {
   amountMinor: number
   reason: AdjustmentReason
   reasonDetail: string
-  operatorReference: string
 }
 
 export interface ParkingSession {
