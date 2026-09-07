@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Validated
 @RequestMapping("/api/v1/facilities/{facilityId}/audit-events")
-public final class AuditController {
+public class AuditController {
 
     private final AuditHistory auditHistory;
 
