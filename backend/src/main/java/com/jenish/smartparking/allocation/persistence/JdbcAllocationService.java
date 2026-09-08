@@ -160,11 +160,8 @@ public final class JdbcAllocationService implements AllocationService {
                     .param("requiredSize", requiredSize.name())
                     .update();
         } catch (DuplicateKeyException exception) {
-            if (findActive(facilityId, vehicleIdentifier, false).isPresent()) {
-                throw new VehicleAlreadyParkedException(vehicleIdentifier);
-            }
             throw new TransientDataAccessResourceException(
-                    "parking space was claimed concurrently",
+                    "parking allocation conflicted with a concurrent request",
                     exception);
         }
 
