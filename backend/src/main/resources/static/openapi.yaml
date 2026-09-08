@@ -148,6 +148,37 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+  /api/v1/facilities/{facilityId}/audit-events:
+    get:
+      operationId: listAuditEvents
+      summary: List append-only facility audit history
+      description: Requires ADMIN. Results are ordered by occurrence time and identifier, newest first.
+      parameters:
+        - $ref: '#/components/parameters/FacilityId'
+        - name: before
+          in: query
+          description: Optional exclusive timestamp cursor.
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 100
+      responses:
+        '200':
+          description: Facility audit events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/v1/facilities/{facilityId}/reservations/{reservationId}:
     put:
       operationId: createReservation
@@ -521,7 +552,6 @@ components:
         - amountMinor
         - reason
         - reasonDetail
-        - operatorReference
       properties:
         amountMinor:
           type: integer
@@ -540,11 +570,6 @@ components:
           type: string
           minLength: 1
           maxLength: 240
-        operatorReference:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Unverified development identifier until authenticated identity is integrated.
     ReceiptStatement:
       type: object
       required:
@@ -629,7 +654,7 @@ components:
         - amountMinor
         - reason
         - reasonDetail
-        - operatorReference
+        - actorSubject
         - createdAt
       properties:
         adjustmentId:
@@ -647,9 +672,43 @@ components:
             - OTHER
         reasonDetail:
           type: string
-        operatorReference:
+        actorSubject:
           type: string
+          description: Subject claim from the authenticated access token.
         createdAt:
+          type: string
+          format: date-time
+    AuditEvent:
+      type: object
+      required:
+        - eventId
+        - facilityId
+        - actorSubject
+        - action
+        - targetType
+        - targetId
+        - occurredAt
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        facilityId:
+          type: string
+          format: uuid
+        actorSubject:
+          type: string
+        action:
+          type: string
+          enum:
+            - FEE_ADJUSTMENT_APPENDED
+        targetType:
+          type: string
+          enum:
+            - RECEIPT
+        targetId:
+          type: string
+          format: uuid
+        occurredAt:
           type: string
           format: date-time
     Space:

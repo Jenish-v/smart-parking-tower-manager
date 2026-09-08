@@ -1,5 +1,8 @@
 package com.jenish.smartparking.identity;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jenish.smartparking.audit.application.AuditHistory;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -37,6 +41,9 @@ class ApiAuthorizationTest {
 
     @MockitoBean
     private JwtDecoder jwtDecoder;
+
+    @MockitoBean
+    private AuditHistory auditHistory;
 
     @Test
     void leavesHealthAndContractEndpointsPublic() throws Exception {
@@ -97,5 +104,20 @@ class ApiAuthorizationTest {
                 new SimpleGrantedAuthority("ROLE_OPERATOR")));
         org.junit.jupiter.api.Assertions.assertTrue(authentication.getAuthorities().contains(
                 new SimpleGrantedAuthority("ROLE_ADMIN")));
+    }
+
+    @Test
+    void reservesAuditHistoryForAdministrators() throws Exception {
+        when(auditHistory.find(any(), any(), eq(100))).thenReturn(List.of());
+        String path = "/api/v1/facilities/" + FACILITY_ID + "/audit-events";
+
+        mockMvc.perform(get(path)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERATOR"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+        mockMvc.perform(get(path)
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
     }
 }

@@ -30,6 +30,6 @@ published.
 - Database access must use parameterized queries or framework-managed bindings.
 - Dependency updates must pass automated tests before merge.
 - Logs must not contain passwords, tokens, payment details, or unnecessary personal data.
-- Public deployment is blocked until browser authentication, audit history, and deployment controls are verified.
+- Public deployment is blocked until deployment controls and the remaining security hardening are verified.
 
 Security controls described as planned are not considered active until they are implemented and verified.

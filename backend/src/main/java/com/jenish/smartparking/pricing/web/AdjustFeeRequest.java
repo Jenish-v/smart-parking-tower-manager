@@ -17,8 +17,5 @@ public record AdjustFeeRequest(
         String reason,
         @NotBlank
         @Size(max = 240)
-        String reasonDetail,
-        @NotBlank
-        @Size(max = 64)
-        String operatorReference) {
+        String reasonDetail) {
 }

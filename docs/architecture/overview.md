@@ -75,8 +75,8 @@ effective at entry time, calculates the fee, and stores an immutable receipt bef
 Failure leaves the session and allocation active. The exit response includes the receipt breakdown, and an exact retry
 returns the same receipt. Vehicle history presents the immutable base receipt total. The receipt statement API appends
 reason-coded signed adjustments under a row lock, keeps the original receipt unchanged, and rejects a total below zero.
-Client-selected adjustment UUIDs provide durable replay detection. Operator references remain unverified caller labels
-until identity is implemented.
+Client-selected adjustment UUIDs provide durable replay detection. The adjustment actor is the validated token subject;
+local mode uses a fixed development actor.
 
 ## Data
 
@@ -125,8 +125,8 @@ public.
 
 Security is enabled by default outside the local profile. Secured dashboard builds use authorization code flow with
 Proof Key for Code Exchange; Local Compose disables authentication to avoid an external provider dependency.
-Adjustment actor references are not yet derived from the authenticated principal, and append-only audit persistence
-remains unfinished.
+Fee adjustments and their audit events commit atomically. Audit rows capture the actor subject, action, target, and
+occurrence time, and database triggers reject updates and deletes. Audit history is available only to administrators.
 
 Personal data is limited to what is required to identify a vehicle and parking session. Retention rules will be
 approved before production readiness.
@@ -160,6 +160,7 @@ local test results.
 - [Pricing domain](pricing-domain.md)
 - [Occupancy reporting](occupancy-reporting.md)
 - [Identity and authorization](identity.md)
+- [Audit history](audit-history.md)
 - [API guide](../api/README.md)
 - [Frontend component standards](../frontend/component-standards.md)
 - [Persistence](persistence.md)

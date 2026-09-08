@@ -23,7 +23,7 @@ prefix. The maintained roles are:
 | Role | Access |
 | --- | --- |
 | `OPERATOR` | Occupancy, parking-session, reservation, and receipt reads; parking and reservation commands |
-| `ADMIN` | All operator access plus fee adjustments |
+| `ADMIN` | All operator access plus fee adjustments and audit history |
 
 Unknown roles grant no API access. Missing or invalid authentication returns `AUTHENTICATION_REQUIRED`; insufficient
 role membership returns `ACCESS_DENIED`. Both use the same problem-detail shape as application errors.
@@ -42,5 +42,9 @@ VITE_OIDC_SCOPE=openid profile
 
 The issuer must publish standard OpenID Provider metadata and a JSON Web Key Set. The public browser client must allow
 the dashboard callback and logout origins, require PKCE, and issue the backend-compatible `roles` claim. Provider
-provisioning, audience validation, facility-scoped claims, verified actors, and durable audit records remain Milestone
-12 work. Until those pieces are implemented, the system is not ready for an internet-facing deployment.
+provisioning, audience validation, and facility-scoped claims remain deployment hardening work. Fee adjustments derive
+their actor from the token subject. The adjustment and corresponding audit event commit in the same transaction.
+
+Audit events record facility, actor subject, action, target type, target identifier, and occurrence time. PostgreSQL
+triggers reject updates and deletes, and only administrators can query the newest-first facility history. Local mode
+uses the explicit `local-development` actor because it deliberately has no authenticated principal.

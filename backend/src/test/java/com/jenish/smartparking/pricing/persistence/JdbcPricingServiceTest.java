@@ -13,6 +13,7 @@ import com.jenish.smartparking.pricing.domain.Money;
 import com.jenish.smartparking.pricing.domain.ParkingReceipt;
 import com.jenish.smartparking.pricing.domain.AdjustmentReason;
 import com.jenish.smartparking.pricing.domain.ReceiptStatement;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -25,7 +26,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -47,6 +51,9 @@ class JdbcPricingServiceTest {
 
     @Autowired
     private JdbcClient jdbcClient;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     @Test
     void persistsAndReplaysAReceiptFromTheApplicableRatePlan() {
@@ -120,6 +127,10 @@ class JdbcPricingServiceTest {
         assertEquals(adjusted, replay);
         assertEquals(150, adjusted.adjustedTotalMinor());
         assertEquals(1L, count("fee_adjustments"));
+        assertEquals(1L, count("audit_events"));
+        assertEquals("operator-1", jdbcClient.sql("""
+                SELECT actor_subject FROM audit_events
+                """).query(String.class).single());
         assertEquals(adjusted, pricingService.findStatement(new FacilityId(FACILITY_ID), sessionId));
         assertEquals(1, pricingService.findReceipts(java.util.List.of(sessionId)).size());
     }
@@ -156,6 +167,42 @@ class JdbcPricingServiceTest {
                 AdjustmentReason.CUSTOMER_SERVICE,
                 "Excessive credit",
                 "operator-1"));
+    }
+
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void rollsBackTheAdjustmentWhenAuditPersistenceFails() {
+        Instant exitedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        Instant enteredAt = exitedAt.minus(35, ChronoUnit.MINUTES);
+        UUID sessionId = insertSession(enteredAt, exitedAt);
+        try {
+            pricingService.assess(sessionId, SizeClass.SMALL, enteredAt, exitedAt);
+            PricingService failingAuditService = new JdbcPricingService(
+                    jdbcClient,
+                    Clock.systemUTC(),
+                    new TransactionTemplate(transactionManager),
+                    event -> {
+                        throw new IllegalStateException("audit unavailable");
+                    });
+
+            assertThrows(IllegalStateException.class, () -> failingAuditService.adjust(
+                    new FacilityId(FACILITY_ID),
+                    sessionId,
+                    UUID.randomUUID(),
+                    100,
+                    AdjustmentReason.OPERATIONAL_EXCEPTION,
+                    "Validated gate outage",
+                    "operator-1"));
+            assertEquals(0L, count("fee_adjustments"));
+            assertEquals(0L, count("audit_events"));
+        } finally {
+            jdbcClient.sql("DELETE FROM parking_receipts WHERE session_id = :sessionId")
+                    .param("sessionId", sessionId)
+                    .update();
+            jdbcClient.sql("DELETE FROM parking_sessions WHERE id = :sessionId")
+                    .param("sessionId", sessionId)
+                    .update();
+        }
     }
 
     private UUID insertSession(Instant enteredAt, Instant exitedAt) {

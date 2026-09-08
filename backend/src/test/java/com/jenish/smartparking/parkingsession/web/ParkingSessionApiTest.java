@@ -187,8 +187,7 @@ class ParkingSessionApiTest {
                 {
                   "amountMinor":100,
                   "reason":"OPERATIONAL_EXCEPTION",
-                  "reasonDetail":"Validated gate outage",
-                  "operatorReference":"operator-1"
+                  "reasonDetail":"Validated gate outage"
                 }
                 """;
         HttpResponse<String> adjusted = putAdjustment(sessionId, adjustmentId, body);
@@ -198,6 +197,12 @@ class ParkingSessionApiTest {
         assertEquals(adjusted.body(), replay.body());
         assertTrue(adjusted.body().contains("\"adjustedTotalMinor\":100"));
         assertTrue(adjusted.body().contains("\"reason\":\"OPERATIONAL_EXCEPTION\""));
+        assertTrue(adjusted.body().contains("\"actorSubject\":\"local-development\""));
+        assertEquals(1L, jdbcClient.sql("""
+                SELECT count(*) FROM audit_events WHERE target_id = (
+                    SELECT id FROM parking_receipts WHERE session_id = :sessionId
+                )
+                """).param("sessionId", sessionId).query(Long.class).single());
 
         HttpResponse<String> history = get("?vehicleIdentifier=TOR%20505");
         assertTrue(history.body().contains("\"receiptId\":"));

@@ -60,7 +60,8 @@ matching, including rollback when a matched arrival cannot obtain a space.
 Pricing tests cover grace, rounding, effective-window, size-rate, daily-cap, currency, overflow, persistence, receipt
 and adjustment replay, negative adjusted totals, and missing-plan rollback boundaries.
 Security tests cover public probes, missing authentication, role mapping, operator commands, and administrator-only fee
-adjustments.
+adjustments and audit history. Audit tests cover verified subject resolution, transaction rollback, pagination order,
+and database-enforced append-only history.
 Testcontainers skips those tests when Docker is unavailable; continuous integration runs them with Docker available.
 
 ## Run
@@ -90,12 +91,14 @@ PUT  /api/v1/facilities/{facilityId}/reservations/{reservationId}
 GET  /api/v1/facilities/{facilityId}/reservations/{reservationId}
 DELETE /api/v1/facilities/{facilityId}/reservations/{reservationId}
 GET  /api/v1/facilities/{facilityId}/reservations?vehicleIdentifier={value}
+GET  /api/v1/facilities/{facilityId}/audit-events
 ```
 
 Parking-session mutations require a UUID `Idempotency-Key` header. Reservation creation uses a client-selected UUID in
 the path and safely replays an identical request. Errors use `application/problem+json` and include a stable `code`
 property. When security is enabled, all `/api/v1` calls require a bearer JWT. `OPERATOR` and `ADMIN` can use ordinary
-parking and reservation operations; only `ADMIN` can append fee adjustments. Adjustment `operatorReference` values are
-still caller-supplied labels and are not verified principals. The dashboard can acquire a token through authorization
-code flow with PKCE, but the system must not be exposed as a production internet endpoint until audit records use the
-verified principal. Additional Actuator endpoints require an explicit architecture and security review.
+parking and reservation operations; only `ADMIN` can append fee adjustments. The service does not accept an adjustment
+actor from the caller: it derives `actorSubject` from the validated JWT subject and records the
+adjustment plus its audit event atomically. `ADMIN` can query append-only facility audit history. The local profile uses
+the fixed `local-development` actor because authentication is disabled. Additional Actuator endpoints require an
+explicit architecture and security review.

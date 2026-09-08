@@ -21,6 +21,8 @@ public class SecurityConfiguration {
     private static final String ADJUSTMENT_PATH =
             "/api/v1/facilities/*/parking-sessions/*/receipt/adjustments/*";
 
+    private static final String AUDIT_PATH = "/api/v1/facilities/*/audit-events";
+
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -39,6 +41,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health/**", "/openapi.yaml").permitAll()
                         .requestMatchers(HttpMethod.PUT, ADJUSTMENT_PATH).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, AUDIT_PATH).hasRole("ADMIN")
                         .requestMatchers("/api/v1/**").hasAnyRole("OPERATOR", "ADMIN")
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(

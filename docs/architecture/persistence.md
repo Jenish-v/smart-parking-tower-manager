@@ -12,6 +12,7 @@ through Flyway migrations.
 | Parking sessions | `parking_sessions`, `parking_session_requests` |
 | Reservations | `reservations` |
 | Pricing | `pricing_rate_plans`, `pricing_rate_bands`, `parking_receipts`, `fee_adjustments` |
+| Audit | `audit_events` |
 
 The facility hierarchy stores configured space identity, size, and operational state. Natural identifiers are unique
 within their parent, and check constraints reproduce domain identifier and state rules.
@@ -31,10 +32,15 @@ status, identifier, window, and transition-time rules.
 Pricing rows store immutable versioned plans and a complete rate band for each size. An exclusion constraint prevents
 overlapping effective windows. Each completed session has at most one receipt snapshot containing its exact plan
 version, calculation inputs, gross charge, cap discount, total, and currency.
-Fee-adjustment rows retain signed minor-unit amounts, controlled reason codes, free-text detail, an operator reference,
-and creation time. A transaction-scoped advisory lock serializes reuse of an adjustment identifier, then the receipt
-row is locked before an adjustment is appended. Primary-key replay detection and an exact fact comparison make retries
+Fee-adjustment rows retain signed minor-unit amounts, controlled reason codes, free-text detail, the authenticated actor
+subject, and creation time. A transaction-scoped advisory lock serializes reuse of an adjustment identifier, then the
+receipt row is locked before an adjustment is appended. Primary-key replay detection and an exact fact comparison make retries
 safe, while the transaction rejects any adjusted total below zero.
+
+Audit rows retain the facility, authenticated actor subject, controlled action, target, and occurrence time. The
+current audited action is an administrator fee adjustment. It is inserted in the adjustment transaction, so neither
+record can commit alone. Database triggers reject audit updates and deletes; the application exposes read-only,
+administrator-scoped history.
 
 ## Transactions and locking
 
@@ -68,5 +74,5 @@ CAD reference rate used by local exit workflows.
 
 Testcontainers applies both locations to PostgreSQL and verifies the fixture, constraints, deterministic selection,
 allocation concurrency, session transitions, request replay, rollback behaviour, reservation capacity concurrency,
-cancellation, expiry, arrival fulfillment, pricing persistence, receipt replay, adjustment replay and conflict, and
-history.
+cancellation, expiry, arrival fulfillment, pricing persistence, receipt replay, adjustment replay and conflict, audit
+atomicity, append-only enforcement, and history.
