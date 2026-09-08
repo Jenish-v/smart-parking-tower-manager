@@ -175,25 +175,34 @@ class JdbcPricingServiceTest {
         Instant exitedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         Instant enteredAt = exitedAt.minus(35, ChronoUnit.MINUTES);
         UUID sessionId = insertSession(enteredAt, exitedAt);
-        pricingService.assess(sessionId, SizeClass.SMALL, enteredAt, exitedAt);
-        PricingService failingAuditService = new JdbcPricingService(
-                jdbcClient,
-                Clock.systemUTC(),
-                new TransactionTemplate(transactionManager),
-                event -> {
-                    throw new IllegalStateException("audit unavailable");
-                });
+        try {
+            pricingService.assess(sessionId, SizeClass.SMALL, enteredAt, exitedAt);
+            PricingService failingAuditService = new JdbcPricingService(
+                    jdbcClient,
+                    Clock.systemUTC(),
+                    new TransactionTemplate(transactionManager),
+                    event -> {
+                        throw new IllegalStateException("audit unavailable");
+                    });
 
-        assertThrows(IllegalStateException.class, () -> failingAuditService.adjust(
-                new FacilityId(FACILITY_ID),
-                sessionId,
-                UUID.randomUUID(),
-                100,
-                AdjustmentReason.OPERATIONAL_EXCEPTION,
-                "Validated gate outage",
-                "operator-1"));
-        assertEquals(0L, count("fee_adjustments"));
-        assertEquals(0L, count("audit_events"));
+            assertThrows(IllegalStateException.class, () -> failingAuditService.adjust(
+                    new FacilityId(FACILITY_ID),
+                    sessionId,
+                    UUID.randomUUID(),
+                    100,
+                    AdjustmentReason.OPERATIONAL_EXCEPTION,
+                    "Validated gate outage",
+                    "operator-1"));
+            assertEquals(0L, count("fee_adjustments"));
+            assertEquals(0L, count("audit_events"));
+        } finally {
+            jdbcClient.sql("DELETE FROM parking_receipts WHERE session_id = :sessionId")
+                    .param("sessionId", sessionId)
+                    .update();
+            jdbcClient.sql("DELETE FROM parking_sessions WHERE id = :sessionId")
+                    .param("sessionId", sessionId)
+                    .update();
+        }
     }
 
     private UUID insertSession(Instant enteredAt, Instant exitedAt) {

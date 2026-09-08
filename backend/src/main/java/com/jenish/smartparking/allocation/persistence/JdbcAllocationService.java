@@ -20,6 +20,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -159,7 +160,12 @@ public final class JdbcAllocationService implements AllocationService {
                     .param("requiredSize", requiredSize.name())
                     .update();
         } catch (DuplicateKeyException exception) {
-            throw new VehicleAlreadyParkedException(vehicleIdentifier);
+            if (findActive(facilityId, vehicleIdentifier, false).isPresent()) {
+                throw new VehicleAlreadyParkedException(vehicleIdentifier);
+            }
+            throw new TransientDataAccessResourceException(
+                    "parking space was claimed concurrently",
+                    exception);
         }
 
         return allocation;
