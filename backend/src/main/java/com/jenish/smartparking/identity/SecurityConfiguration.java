@@ -40,6 +40,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/actuator/health/**", "/openapi.yaml").permitAll()
+                        .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, ADJUSTMENT_PATH).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, AUDIT_PATH).hasRole("ADMIN")
                         .requestMatchers("/api/v1/**").hasAnyRole("OPERATOR", "ADMIN")

@@ -3,23 +3,17 @@ name: Local Runtime CI
 on:
   pull_request:
     paths:
+      - "backend/**"
+      - "frontend/**"
       - "compose.yaml"
-      - "backend/Dockerfile"
-      - "backend/.dockerignore"
-      - "frontend/Dockerfile"
-      - "frontend/.dockerignore"
-      - "frontend/nginx.conf"
       - ".github/workflows/runtime-ci.yml"
   push:
     branches:
       - main
     paths:
+      - "backend/**"
+      - "frontend/**"
       - "compose.yaml"
-      - "backend/Dockerfile"
-      - "backend/.dockerignore"
-      - "frontend/Dockerfile"
-      - "frontend/.dockerignore"
-      - "frontend/nginx.conf"
       - ".github/workflows/runtime-ci.yml"
 
 permissions:
@@ -49,7 +43,13 @@ jobs:
         run: docker compose up --detach --wait
 
       - name: Verify backend readiness
-        run: curl --fail --silent --show-error http://localhost:8080/actuator/health/readiness
+        run: |
+          curl --fail --silent --show-error \
+            --header 'X-Request-ID: runtime-ci-readiness' \
+            --dump-header /tmp/readiness-headers \
+            http://localhost:8080/actuator/health/readiness \
+            > /dev/null
+          grep --ignore-case --quiet '^x-request-id: runtime-ci-readiness' /tmp/readiness-headers
 
       - name: Verify reference facility
         run: |
@@ -59,6 +59,18 @@ jobs:
 
       - name: Verify operator dashboard
         run: curl --fail --silent --show-error http://localhost:5173/ > /dev/null
+
+      - name: Verify Prometheus telemetry
+        run: |
+          curl --fail --silent --show-error http://localhost:8080/actuator/prometheus \
+            | grep --quiet '^jvm_memory_used_bytes'
+
+      - name: Verify structured request logs
+        run: |
+          docker compose logs --no-color --no-log-prefix backend \
+            | jq --exit-status --raw-input \
+              'fromjson? | select(.ecs.version == "8.11" and .["request.id"] == "runtime-ci-readiness")' \
+            > /dev/null
 
       - name: Collect service logs
         if: failure()

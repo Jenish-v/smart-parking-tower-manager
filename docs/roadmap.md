@@ -96,7 +96,8 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 ## Milestone 13: Operations and hardening
 
-- Add metrics, tracing, and structured logs.
+- Add metrics, tracing, and structured logs. Prometheus metrics, ECS logs, and request correlation implemented; trace
+  export remains planned.
 - Add backup, restore, deployment, and rollback guidance.
 - Run load, recovery, and graceful-shutdown tests.
 - Complete security and dependency review.

@@ -41,7 +41,7 @@ the public API through a typed transport boundary.
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
-| Operations | Health, liveness, readiness, graceful shutdown |
+| Operations | Health probes, Prometheus metrics, ECS JSON logs, request correlation, graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
@@ -56,6 +56,11 @@ adjustments. Fee adjustments derive the actor from the validated token subject a
 the same transaction. Administrators can inspect facility audit history through the API. Production deployment remains
 planned. Session, receipt, adjustment, audit, and idempotency histories are retained without automated deletion until a
 production retention policy is approved.
+
+The backend publishes JVM, process, database-pool, Tomcat, and HTTP request metrics in Prometheus format. Secured
+environments restrict the scrape endpoint to administrators; local mode leaves it available to the self-contained
+stack. Console logs use Elastic Common Schema JSON and include a validated or generated `X-Request-ID` on each request
+completion event. Request logs exclude query strings, request bodies, credentials, and vehicle identifiers.
 
 Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
 disables enforcement and omits browser OIDC configuration so it does not depend on an external provider. It remains
@@ -117,7 +122,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
 The service listens on port 8080. Health endpoints are under `/actuator/health`, and the OpenAPI contract is available
-at `/openapi.yaml`.
+at `/openapi.yaml`. Prometheus metrics are available at `/actuator/prometheus`; secured environments require an
+administrator bearer token.
 
 ## Frontend setup
 
@@ -182,6 +188,7 @@ response, idempotency, and error behaviour.
 - [Pricing domain](docs/architecture/pricing-domain.md)
 - [Identity and authorization](docs/architecture/identity.md)
 - [Audit history](docs/architecture/audit-history.md)
+- [Operational observability](docs/operations/observability.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)

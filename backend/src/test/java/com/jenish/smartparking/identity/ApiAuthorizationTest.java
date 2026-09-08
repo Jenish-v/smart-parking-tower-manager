@@ -54,6 +54,18 @@ class ApiAuthorizationTest {
     }
 
     @Test
+    void reservesPrometheusMetricsForAdministrators() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERATOR"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
+    }
+
+    @Test
     void returnsAStableProblemWhenAuthenticationIsMissing() throws Exception {
         mockMvc.perform(get("/api/v1/unmapped"))
                 .andExpect(status().isUnauthorized())
