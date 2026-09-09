@@ -69,7 +69,7 @@ jobs:
         run: |
           docker compose logs --no-color --no-log-prefix backend \
             | jq --exit-status --raw-input \
-              'fromjson? | select(.ecs.version == "8.11" and .["request.id"] == "runtime-ci-readiness")' \
+              'fromjson? | select(.ecs.version == "8.11" and .request.id == "runtime-ci-readiness")' \
             > /dev/null
 
       - name: Collect service logs
