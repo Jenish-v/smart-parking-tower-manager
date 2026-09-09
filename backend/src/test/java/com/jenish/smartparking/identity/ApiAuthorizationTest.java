@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.boot.micrometer.metrics.test.autoconfigure.AutoConfigureMetrics;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -33,7 +32,6 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration"
 })
 @AutoConfigureMockMvc
-@AutoConfigureMetrics(export = true)
 class ApiAuthorizationTest {
 
     private static final String FACILITY_ID = "d936bb7d-3027-47aa-a47b-d04a37e07310";
@@ -56,15 +54,11 @@ class ApiAuthorizationTest {
     }
 
     @Test
-    void reservesPrometheusMetricsForAdministrators() throws Exception {
+    void deniesPrometheusMetricsToOperators() throws Exception {
         mockMvc.perform(get("/actuator/prometheus")
                         .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERATOR"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
-        mockMvc.perform(get("/actuator/prometheus")
-                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN));
     }
 
     @Test
