@@ -54,6 +54,14 @@ class ApiAuthorizationTest {
     }
 
     @Test
+    void deniesPrometheusMetricsToOperators() throws Exception {
+        mockMvc.perform(get("/actuator/prometheus")
+                        .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_OPERATOR"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("ACCESS_DENIED"));
+    }
+
+    @Test
     void returnsAStableProblemWhenAuthenticationIsMissing() throws Exception {
         mockMvc.perform(get("/api/v1/unmapped"))
                 .andExpect(status().isUnauthorized())

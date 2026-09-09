@@ -4,8 +4,8 @@
 
 The project is pre-release. No production version is currently supported. The backend validates OpenID Connect access
 tokens and enforces operator and administrator roles, and secured dashboard builds support browser login. Local mode
-disables authentication. Internet-facing deployment remains blocked until verified audit actors and operational
-hardening are complete.
+disables authentication. Verified actors are recorded for fee adjustments. Internet-facing deployment remains blocked
+until deployment controls and the remaining operational hardening are complete.
 
 ## Reporting a vulnerability
 
@@ -30,6 +30,7 @@ published.
 - Database access must use parameterized queries or framework-managed bindings.
 - Dependency updates must pass automated tests before merge.
 - Logs must not contain passwords, tokens, payment details, or unnecessary personal data.
+- Operational metrics must use bounded labels and remain administrator-only when authentication is enabled.
 - Public deployment is blocked until deployment controls and the remaining security hardening are verified.
 
 Security controls described as planned are not considered active until they are implemented and verified.

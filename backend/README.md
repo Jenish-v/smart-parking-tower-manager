@@ -25,6 +25,8 @@ DB_USERNAME=smart_parking
 DB_PASSWORD=smart_parking
 SECURITY_ENABLED=true
 OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
+CONSOLE_LOG_STRUCTURED_FORMAT=ecs
+DEPLOYMENT_ENVIRONMENT=production
 ```
 
 Override every value through environment variables outside local development. Flyway applies the production schema
@@ -78,6 +80,7 @@ The service listens on port 8080 and exposes:
 GET  /actuator/health
 GET  /actuator/health/liveness
 GET  /actuator/health/readiness
+GET  /actuator/prometheus
 GET  /openapi.yaml
 GET  /api/v1/facilities/{facilityId}/occupancy
 GET  /api/v1/facilities/{facilityId}/occupancy/stream
@@ -102,3 +105,9 @@ actor from the caller: it derives `actorSubject` from the validated JWT subject 
 adjustment plus its audit event atomically. `ADMIN` can query append-only facility audit history. The local profile uses
 the fixed `local-development` actor because authentication is disabled. Additional Actuator endpoints require an
 explicit architecture and security review.
+
+The Prometheus endpoint includes JVM, process, HTTP server, Tomcat, and database-pool telemetry. It requires `ADMIN`
+when security is enabled. Console output uses Elastic Common Schema JSON by default. Every HTTP response includes an
+`X-Request-ID`; a valid caller value is preserved, otherwise the service generates one. The same value appears as
+`request.id` on the structured request-completion log event. Set `CONSOLE_LOG_STRUCTURED_FORMAT` only when the target
+log collector requires another Spring Boot-supported format.

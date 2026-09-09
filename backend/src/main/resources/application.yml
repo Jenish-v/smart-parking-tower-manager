@@ -12,6 +12,17 @@ spring:
 
 server:
   shutdown: graceful
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
+logging:
+  structured:
+    format:
+      console: ${CONSOLE_LOG_STRUCTURED_FORMAT:ecs}
+    ecs:
+      service:
+        environment: ${DEPLOYMENT_ENVIRONMENT:unknown}
 
 smart-parking:
   security:
@@ -27,9 +38,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   health:
     livenessstate:
       enabled: true
     readinessstate:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
