@@ -98,8 +98,10 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 - Add metrics, tracing, and structured logs. Prometheus metrics, ECS logs, and request correlation implemented; trace
   export remains planned.
-- Add backup, restore, deployment, and rollback guidance.
-- Run load, recovery, and graceful-shutdown tests.
+- Add backup, restore, deployment, and rollback guidance. Local backup and restore implemented and recovery-tested;
+  deployment and rollback guidance remain planned.
+- Run load, recovery, and graceful-shutdown tests. Recovery drill implemented; load and graceful-shutdown tests remain
+  planned.
 - Complete security and dependency review.
 
 ## Milestone 14: Release candidate

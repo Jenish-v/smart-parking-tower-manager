@@ -76,3 +76,14 @@ Testcontainers applies both locations to PostgreSQL and verifies the fixture, co
 allocation concurrency, session transitions, request replay, rollback behaviour, reservation capacity concurrency,
 cancellation, expiry, arrival fulfillment, pricing persistence, receipt replay, adjustment replay and conflict, audit
 atomicity, append-only enforcement, and history.
+
+## Backup and recovery
+
+The maintained local runtime uses PostgreSQL custom-format logical backups with a SHA-256 sidecar. Restore validates
+both the checksum and archive before replacing the database, then waits for application health checks. Runtime CI
+performs a destructive recovery drill against disposable data and verifies the reference fixture and removal of a
+post-backup mutation. See [database backup and recovery](../operations/database-recovery.md) for commands, controls,
+limitations, and post-restore checks.
+
+Logical snapshots do not provide point-in-time recovery. Production recovery objectives, continuous archiving,
+retention, storage encryption, and platform-native restore controls remain deployment decisions.

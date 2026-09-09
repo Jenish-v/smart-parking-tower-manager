@@ -41,7 +41,7 @@ the public API through a typed transport boundary.
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
-| Operations | Health probes, Prometheus metrics, ECS JSON logs, request correlation, graceful shutdown |
+| Operations | Health probes, Prometheus metrics, ECS JSON logs, request correlation, tested database recovery |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
@@ -89,6 +89,10 @@ facility and a clearly labelled CAD reference rate plan. Stop the services with 
 only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
 loads the operator dashboard before runtime changes can be merged.
+
+Create an integrity-checked logical database backup with `scripts/backup-database.sh BACKUP_FILE`. Restoring replaces
+the local database and requires an explicit confirmation value. Follow the [database backup and recovery
+runbook](docs/operations/database-recovery.md) before running either operation.
 
 ## Backend setup
 
@@ -189,6 +193,7 @@ response, idempotency, and error behaviour.
 - [Identity and authorization](docs/architecture/identity.md)
 - [Audit history](docs/architecture/audit-history.md)
 - [Operational observability](docs/operations/observability.md)
+- [Database backup and recovery](docs/operations/database-recovery.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
