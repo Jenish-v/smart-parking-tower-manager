@@ -5,6 +5,7 @@ on:
     paths:
       - "backend/**"
       - "frontend/**"
+      - "scripts/**"
       - "compose.yaml"
       - ".github/workflows/runtime-ci.yml"
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - "backend/**"
       - "frontend/**"
+      - "scripts/**"
       - "compose.yaml"
       - ".github/workflows/runtime-ci.yml"
 
@@ -71,6 +73,9 @@ jobs:
             | jq --exit-status --raw-input \
               'fromjson? | select(.ecs.version == "8.11" and .request.id == "runtime-ci-readiness")' \
             > /dev/null
+
+      - name: Verify database recovery
+        run: scripts/verify-database-recovery.sh
 
       - name: Collect service logs
         if: failure()
