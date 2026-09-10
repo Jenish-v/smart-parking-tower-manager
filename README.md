@@ -41,7 +41,7 @@ the public API through a typed transport boundary.
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
-| Operations | Health probes, Prometheus metrics, ECS JSON logs, request correlation, tested database recovery |
+| Operations | Health probes, Prometheus metrics, OpenTelemetry traces, ECS JSON logs, tested database recovery |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
@@ -59,8 +59,10 @@ production retention policy is approved.
 
 The backend publishes JVM, process, database-pool, Tomcat, and HTTP request metrics in Prometheus format. Secured
 environments restrict the scrape endpoint to administrators; local mode leaves it available to the self-contained
-stack. Console logs use Elastic Common Schema JSON and include a validated or generated `X-Request-ID` on each request
-completion event. Request logs exclude query strings, request bodies, credentials, and vehicle identifiers.
+stack. It accepts W3C trace context and exports sampled spans over OTLP/HTTP. The local runtime includes an in-memory
+Jaeger service for trace inspection. Console logs use Elastic Common Schema JSON and include a validated or generated
+`X-Request-ID` on each request completion event. Request logs exclude query strings, request bodies, credentials, and
+vehicle identifiers.
 
 Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
 disables enforcement and omits browser OIDC configuration so it does not depend on an external provider. It remains
@@ -83,10 +85,10 @@ Docker Engine with Compose v2 is the only requirement for the maintained local r
 docker compose up --build
 ```
 
-The operator dashboard is available at `http://localhost:5173`, the backend at `http://localhost:8080`, and the OpenAPI
-contract at `http://localhost:8080/openapi.yaml`. The local profile loads the deterministic 7,200-space reference
-facility and a clearly labelled CAD reference rate plan. Stop the services with `docker compose down`. Add `--volumes`
-only when the local database should be erased.
+The operator dashboard is available at `http://localhost:5173`, the backend at `http://localhost:8080`, the Jaeger trace
+viewer at `http://localhost:16686`, and the OpenAPI contract at `http://localhost:8080/openapi.yaml`. The local profile
+loads the deterministic 7,200-space reference facility and a clearly labelled CAD reference rate plan. Stop the
+services with `docker compose down`. Add `--volumes` only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
 loads the operator dashboard before runtime changes can be merged.
 

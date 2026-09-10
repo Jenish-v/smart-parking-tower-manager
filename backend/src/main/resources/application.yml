@@ -30,6 +30,24 @@ smart-parking:
     issuer-uri: ${OIDC_ISSUER_URI:}
 
 management:
+  opentelemetry:
+    resource-attributes:
+      service.name: ${OTEL_SERVICE_NAME:${spring.application.name}}
+    tracing:
+      export:
+        otlp:
+          endpoint: ${OTLP_TRACING_ENDPOINT:}
+      limits:
+        max-attribute-value-length: 256
+  tracing:
+    export:
+      otlp:
+        enabled: ${TRACING_EXPORT_ENABLED:false}
+    propagation:
+      produce: W3C
+      consume: W3C
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
   endpoint:
     health:
       probes:

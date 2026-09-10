@@ -15,6 +15,11 @@ services:
     volumes:
       - smart-parking-data:/var/lib/postgresql/data
 
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.20.0
+    ports:
+      - "16686:16686"
+
   backend:
     build:
       context: ./backend
@@ -25,9 +30,15 @@ services:
       SPRING_PROFILES_ACTIVE: local
       CONSOLE_LOG_STRUCTURED_FORMAT: ecs
       DEPLOYMENT_ENVIRONMENT: local
+      OTEL_SERVICE_NAME: smart-parking-backend
+      OTLP_TRACING_ENDPOINT: http://jaeger:4318/v1/traces
+      TRACING_EXPORT_ENABLED: "true"
+      TRACING_SAMPLING_PROBABILITY: "1.0"
     depends_on:
       postgres:
         condition: service_healthy
+      jaeger:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/actuator/health/readiness"]
       interval: 10s
