@@ -53,6 +53,26 @@ jobs:
             > /dev/null
           grep --ignore-case --quiet '^x-request-id: runtime-ci-readiness' /tmp/readiness-headers
 
+      - name: Verify W3C trace export
+        run: |
+          trace_id=463ac35c9f6413ad48485a3953bb6124
+          curl --fail --silent --show-error \
+            --header "traceparent: 00-${trace_id}-a2fb4a1d1a96d312-01" \
+            http://localhost:8080/actuator/health/readiness \
+            > /dev/null
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              "http://localhost:16686/api/traces/${trace_id}" \
+              | jq --exit-status --arg trace_id "$trace_id" \
+                '.data | any(.traceID == $trace_id)' \
+              > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "trace was not exported to Jaeger" >&2
+          exit 1
+
       - name: Verify reference facility
         run: |
           curl --fail --silent --show-error \

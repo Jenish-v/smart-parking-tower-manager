@@ -23,6 +23,10 @@ The service uses PostgreSQL. The default development connection is:
 DB_URL=jdbc:postgresql://localhost:5432/smart_parking
 DB_USERNAME=smart_parking
 DB_PASSWORD=smart_parking
+OTEL_SERVICE_NAME=smart-parking-backend
+OTLP_TRACING_ENDPOINT=https://collector.example.com/v1/traces
+TRACING_EXPORT_ENABLED=true
+TRACING_SAMPLING_PROBABILITY=0.1
 SECURITY_ENABLED=true
 OIDC_ISSUER_URI=https://identity.example.com/realms/smart-parking
 CONSOLE_LOG_STRUCTURED_FORMAT=ecs
@@ -111,3 +115,7 @@ when security is enabled. Console output uses Elastic Common Schema JSON by defa
 `X-Request-ID`; a valid caller value is preserved, otherwise the service generates one. The same value appears as
 `request.id` on the structured request-completion log event. Set `CONSOLE_LOG_STRUCTURED_FORMAT` only when the target
 log collector requires another Spring Boot-supported format.
+
+Tracing uses W3C propagation and is disabled for export unless `TRACING_EXPORT_ENABLED=true`. When enabled, configure
+the complete OTLP/HTTP collector path and select a sampling probability suitable for the environment. The root Compose
+runtime enables deterministic full sampling and exports to its in-memory Jaeger service.
