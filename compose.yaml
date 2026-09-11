@@ -45,6 +45,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
+    stop_grace_period: 30s
     ports:
       - "8080:8080"
 

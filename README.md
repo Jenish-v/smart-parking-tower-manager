@@ -41,7 +41,7 @@ the public API through a typed transport boundary.
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
 | Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
-| Operations | Health probes, Prometheus metrics, OpenTelemetry traces, ECS JSON logs, tested database recovery |
+| Operations | Health probes, metrics, traces, structured logs, tested recovery and graceful shutdown |
 
 The dashboard presents current facility and floor occupancy with server-sent updates, manual refresh, and 15-second
 fallback polling. It supports parking entry, exit, vehicle session search, and reservation creation, history, and
@@ -90,7 +90,8 @@ viewer at `http://localhost:16686`, and the OpenAPI contract at `http://localhos
 loads the deterministic 7,200-space reference facility and a clearly labelled CAD reference rate plan. Stop the
 services with `docker compose down`. Add `--volumes` only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
-loads the operator dashboard before runtime changes can be merged.
+loads the operator dashboard before runtime changes can be merged. It also verifies trace delivery, database recovery,
+and graceful completion of an in-flight request during backend termination.
 
 Create an integrity-checked logical database backup with `scripts/backup-database.sh BACKUP_FILE`. Restoring replaces
 the local database and requires an explicit confirmation value. Follow the [database backup and recovery
@@ -196,6 +197,7 @@ response, idempotency, and error behaviour.
 - [Audit history](docs/architecture/audit-history.md)
 - [Operational observability](docs/operations/observability.md)
 - [Database backup and recovery](docs/operations/database-recovery.md)
+- [Deployment and rollback](docs/operations/deployment.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)

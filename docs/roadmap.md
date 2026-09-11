@@ -98,10 +98,10 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 - Add metrics, tracing, and structured logs. Prometheus metrics, OpenTelemetry trace export, W3C propagation, ECS logs,
   and request correlation implemented.
-- Add backup, restore, deployment, and rollback guidance. Local backup and restore implemented and recovery-tested;
-  deployment and rollback guidance remain planned.
-- Run load, recovery, and graceful-shutdown tests. Recovery drill implemented; load and graceful-shutdown tests remain
-  planned.
+- Add backup, restore, deployment, and rollback guidance. Implemented for the maintained application and local runtime;
+  target-platform controls remain subject to environment selection.
+- Run load, recovery, and graceful-shutdown tests. Recovery and graceful-shutdown drills implemented; load testing
+  remains planned.
 - Complete security and dependency review.
 
 ## Milestone 14: Release candidate

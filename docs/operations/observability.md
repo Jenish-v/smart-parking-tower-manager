@@ -68,5 +68,4 @@ Each backend log line should be valid JSON. The request-completion record should
 
 ## Remaining work
 
-Milestone 13 still requires deployment-specific alerting, load testing, graceful-shutdown verification, deployment and
-rollback guidance, and the final dependency and security review.
+Milestone 13 still requires deployment-specific alerting, load testing, and the final dependency and security review.
