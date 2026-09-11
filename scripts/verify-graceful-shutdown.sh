@@ -61,6 +61,7 @@ request_process=$!
 
 sleep 1
 restart_required=true
+shutdown_started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 docker compose stop --timeout 30 backend
 
 wait "$lock_process"
@@ -75,10 +76,15 @@ jq --exit-status \
   > /dev/null
 
 exit_code=$(docker inspect --format='{{.State.ExitCode}}' "$backend_container")
-if [[ $exit_code != "0" ]]; then
+if [[ $exit_code != "0" && $exit_code != "143" ]]; then
   echo "backend exited with status $exit_code" >&2
   exit 1
 fi
+
+docker logs --since "$shutdown_started_at" "$backend_container" 2>&1 \
+  | jq --exit-status --raw-input \
+    'fromjson? | select(.message == "Graceful shutdown complete")' \
+  > /dev/null
 
 docker compose up --detach --wait backend
 restart_required=false

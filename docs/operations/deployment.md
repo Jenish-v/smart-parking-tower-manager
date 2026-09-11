@@ -59,8 +59,9 @@ runbook](database-recovery.md) only when data loss or corruption has been confir
 ## Maintained lifecycle test
 
 `scripts/verify-graceful-shutdown.sh` creates a controlled database lock, starts an occupancy request that remains in
-flight, sends `SIGTERM` through Docker Compose, and proves that the request completes before the backend exits cleanly.
-It then restarts the backend and verifies readiness. Runtime CI runs the drill against disposable local data.
+flight, sends `SIGTERM` through Docker Compose, and proves that the request completes before Spring reports graceful
+shutdown completion. It accepts the conventional container status 143 for a process terminated by `SIGTERM`, then
+restarts the backend and verifies readiness. Runtime CI runs the drill against disposable local data.
 
 The test establishes the application shutdown contract. Platform-specific routing removal, surge capacity, pod or task
 budgets, secret rotation, image signing, and network policies require separate verification in the selected deployment
