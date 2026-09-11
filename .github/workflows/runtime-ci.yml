@@ -97,6 +97,9 @@ jobs:
       - name: Verify database recovery
         run: scripts/verify-database-recovery.sh
 
+      - name: Verify graceful shutdown
+        run: scripts/verify-graceful-shutdown.sh
+
       - name: Collect service logs
         if: failure()
         run: docker compose logs --no-color
