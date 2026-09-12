@@ -100,8 +100,8 @@ are satisfied; the roadmap has no calendar-based completion claim.
   and request correlation implemented.
 - Add backup, restore, deployment, and rollback guidance. Implemented for the maintained application and local runtime;
   target-platform controls remain subject to environment selection.
-- Run load, recovery, and graceful-shutdown tests. Recovery and graceful-shutdown drills implemented; load testing
-  remains planned.
+- Run load, recovery, and graceful-shutdown tests. Bounded occupancy load, recovery, and graceful-shutdown checks are
+  implemented; production capacity testing remains deployment-specific.
 - Complete security and dependency review.
 
 ## Milestone 14: Release candidate

@@ -39,7 +39,7 @@ the public API through a typed transport boundary.
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Identity and audit | OIDC PKCE login, API roles, verified actors, and append-only audit history |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
-| Verification | JUnit, Vitest, Testing Library, Testcontainers, ESLint, Checkstyle, GitHub Actions |
+| Verification | JUnit, Vitest, Testcontainers, k6, ESLint, Checkstyle, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
 | Operations | Health probes, metrics, traces, structured logs, tested recovery and graceful shutdown |
 
@@ -91,7 +91,7 @@ loads the deterministic 7,200-space reference facility and a clearly labelled CA
 services with `docker compose down`. Add `--volumes` only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
 loads the operator dashboard before runtime changes can be merged. It also verifies trace delivery, database recovery,
-and graceful completion of an in-flight request during backend termination.
+graceful completion of an in-flight request during backend termination, and bounded concurrent occupancy reads.
 
 Create an integrity-checked logical database backup with `scripts/backup-database.sh BACKUP_FILE`. Restoring replaces
 the local database and requires an explicit confirmation value. Follow the [database backup and recovery
@@ -198,6 +198,7 @@ response, idempotency, and error behaviour.
 - [Operational observability](docs/operations/observability.md)
 - [Database backup and recovery](docs/operations/database-recovery.md)
 - [Deployment and rollback](docs/operations/deployment.md)
+- [Performance testing](docs/operations/performance-testing.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
