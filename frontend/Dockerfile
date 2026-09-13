@@ -17,11 +17,14 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_OIDC_SCOPE=$VITE_OIDC_SCOPE
 RUN npm run build
 
-FROM nginx:1.28-alpine
+FROM nginxinc/nginx-unprivileged:1.28-alpine
 
+USER root
 RUN apk add --no-cache curl
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/dist /usr/share/nginx/html
 
-EXPOSE 80
+USER 101
+
+EXPOSE 8080

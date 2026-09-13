@@ -17,9 +17,9 @@ vulnerability, validate deployment configuration, or assess an external identity
 ## Runtime boundaries
 
 The local Compose runtime binds the dashboard, backend, and Jaeger viewer only to `127.0.0.1`. PostgreSQL has no host
-port. The backend runs as a fixed unprivileged user with a read-only root filesystem, a temporary `/tmp`, all Linux
-capabilities dropped, and privilege escalation disabled. The dashboard sends headers that prevent MIME sniffing and
-framing, suppress referrer data, and disable camera, microphone, and geolocation access.
+port. The backend and dashboard run as fixed unprivileged users with read-only root filesystems, temporary `/tmp`
+mounts, all Linux capabilities dropped, and privilege escalation disabled. The dashboard sends headers that prevent
+MIME sniffing and framing, suppress referrer data, and disable camera, microphone, and geolocation access.
 
 These controls protect local development from accidental network exposure. They are not an internet-facing ingress.
 Production still requires TLS, network policy, rate limits, request-size limits, trusted proxy configuration, managed
