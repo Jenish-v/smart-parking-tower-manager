@@ -3,8 +3,8 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-Milestones 1 through 12 are implemented. Identity includes OIDC browser and API integration, role boundaries, verified
-actors for sensitive commands, and append-only audit history.
+Milestones 1 through 13 are implemented. Operations include telemetry, recovery, deployment lifecycle, load regression,
+container hardening, and automated security checks. Environment-specific production controls remain release inputs.
 
 The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
 operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria
@@ -102,7 +102,8 @@ are satisfied; the roadmap has no calendar-based completion claim.
   target-platform controls remain subject to environment selection.
 - Run load, recovery, and graceful-shutdown tests. Bounded occupancy load, recovery, and graceful-shutdown checks are
   implemented; production capacity testing remains deployment-specific.
-- Complete security and dependency review.
+- Complete security and dependency review. Implemented with CodeQL, Trivy, update coverage, runtime
+  hardening, and a documented set of environment-specific decisions.
 
 ## Milestone 14: Release candidate
 
