@@ -8,7 +8,7 @@ RUN mvn --batch-mode --no-transfer-progress dependency:go-offline
 COPY src ./src
 RUN mvn --batch-mode --no-transfer-progress -DskipTests package
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends curl \
