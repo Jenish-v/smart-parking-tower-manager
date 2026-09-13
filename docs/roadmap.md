@@ -102,7 +102,7 @@ are satisfied; the roadmap has no calendar-based completion claim.
   target-platform controls remain subject to environment selection.
 - Run load, recovery, and graceful-shutdown tests. Bounded occupancy load, recovery, and graceful-shutdown checks are
   implemented; production capacity testing remains deployment-specific.
-- Complete security and dependency review. Implemented with CodeQL, dependency review, update coverage, runtime
+- Complete security and dependency review. Implemented with CodeQL, Trivy, update coverage, runtime
   hardening, and a documented set of environment-specific decisions.
 
 ## Milestone 14: Release candidate

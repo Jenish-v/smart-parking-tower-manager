@@ -39,7 +39,7 @@ the public API through a typed transport boundary.
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Identity and audit | OIDC PKCE login, API roles, verified actors, and append-only audit history |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
-| Verification | JUnit, Vitest, Testcontainers, k6, CodeQL, dependency review, GitHub Actions |
+| Verification | JUnit, Vitest, Testcontainers, k6, CodeQL, Trivy, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
 | Operations | Health probes, metrics, traces, structured logs, tested recovery and graceful shutdown |
 

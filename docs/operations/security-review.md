@@ -6,10 +6,10 @@ selected.
 
 ## Automated controls
 
-Security CI analyzes Java, JavaScript, and TypeScript with CodeQL on pull requests and changes to `main`. Dependency
-review blocks pull requests that introduce a known high or critical severity dependency vulnerability. Dependabot
-tracks Maven, npm, Compose images, backend and frontend container bases, and GitHub Actions each week. Updates remain
-ordinary pull requests and must pass the maintained verification suite before merge.
+Security CI analyzes Java, JavaScript, and TypeScript with CodeQL on pull requests and changes to `main`. Trivy scans
+the repository lockfiles, configuration, and secrets for high or critical findings. Dependabot tracks Maven, npm,
+Compose images, backend and frontend container bases, and GitHub Actions each week. Updates remain ordinary pull
+requests and must pass the maintained verification suite before merge.
 
 Code analysis and dependency metadata are complementary. A passing workflow does not prove the absence of a
 vulnerability, validate deployment configuration, or assess an external identity provider.

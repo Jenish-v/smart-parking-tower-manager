@@ -30,7 +30,7 @@ published.
 - External input must be validated before it reaches domain operations.
 - Database access must use parameterized queries or framework-managed bindings.
 - Dependency updates must pass automated tests before merge.
-- CodeQL and dependency review findings at high or critical severity block release until resolved or formally accepted.
+- CodeQL and Trivy findings at high or critical severity block release until resolved or formally accepted.
 - Logs must not contain passwords, tokens, payment details, or unnecessary personal data.
 - Operational metrics must use bounded labels and remain administrator-only when authentication is enabled.
 - Public deployment is blocked until environment-specific controls and the final release review are verified.
