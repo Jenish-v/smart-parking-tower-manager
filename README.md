@@ -39,7 +39,7 @@ the public API through a typed transport boundary.
 | API | Versioned REST endpoints, OpenAPI 3.0 contract, RFC 9457 problem responses |
 | Identity and audit | OIDC PKCE login, API roles, verified actors, and append-only audit history |
 | Persistence | PostgreSQL, Flyway schema, local reference fixture |
-| Verification | JUnit, Vitest, Testcontainers, k6, ESLint, Checkstyle, GitHub Actions |
+| Verification | JUnit, Vitest, Testcontainers, k6, CodeQL, dependency review, GitHub Actions |
 | Local runtime | Docker Compose with PostgreSQL, backend, and frontend health checks |
 | Operations | Health probes, metrics, traces, structured logs, tested recovery and graceful shutdown |
 
@@ -66,7 +66,7 @@ vehicle identifiers.
 
 Security is enabled by default outside the `local` profile and requires an issuer URI. The self-contained local stack
 disables enforcement and omits browser OIDC configuration so it does not depend on an external provider. It remains
-unsuitable for internet-facing deployment until operational and security hardening are complete.
+unsuitable for internet-facing deployment until the environment-specific controls in the security review are complete.
 
 ## Repository layout
 
@@ -199,6 +199,7 @@ response, idempotency, and error behaviour.
 - [Database backup and recovery](docs/operations/database-recovery.md)
 - [Deployment and rollback](docs/operations/deployment.md)
 - [Performance testing](docs/operations/performance-testing.md)
+- [Security review](docs/operations/security-review.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)

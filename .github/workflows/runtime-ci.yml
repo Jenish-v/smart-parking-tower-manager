@@ -80,7 +80,17 @@ jobs:
             | jq --exit-status '.totalSpaces == 7200 and .availableSpaces == 7200'
 
       - name: Verify operator dashboard
-        run: curl --fail --silent --show-error http://localhost:5173/ > /dev/null
+        run: |
+          curl --fail --silent --show-error \
+            --dump-header /tmp/dashboard-headers \
+            http://localhost:5173/ \
+            > /dev/null
+          grep --ignore-case --quiet '^x-content-type-options: nosniff' /tmp/dashboard-headers
+          grep --ignore-case --quiet '^x-frame-options: DENY' /tmp/dashboard-headers
+          grep --ignore-case --quiet '^referrer-policy: no-referrer' /tmp/dashboard-headers
+          grep --ignore-case --quiet \
+            '^permissions-policy: camera=(), microphone=(), geolocation=()' \
+            /tmp/dashboard-headers
 
       - name: Verify Prometheus telemetry
         run: |
