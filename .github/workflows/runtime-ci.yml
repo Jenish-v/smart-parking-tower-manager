@@ -104,6 +104,9 @@ jobs:
               'fromjson? | select(.ecs.version == "8.11" and .request.id == "runtime-ci-readiness")' \
             > /dev/null
 
+      - name: Verify integrated product workflow
+        run: scripts/verify-release-acceptance.sh
+
       - name: Verify database recovery
         run: scripts/verify-database-recovery.sh
 

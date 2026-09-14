@@ -91,7 +91,14 @@ loads the deterministic 7,200-space reference facility and a clearly labelled CA
 services with `docker compose down`. Add `--volumes` only when the local database should be erased.
 Continuous integration builds this stack, waits for every health check, verifies the reference-facility occupancy, and
 loads the operator dashboard before runtime changes can be merged. It also verifies trace delivery, database recovery,
-graceful completion of an in-flight request during backend termination, and bounded concurrent occupancy reads.
+graceful completion of an in-flight request during backend termination, bounded concurrent occupancy reads, and the
+integrated reservation-to-audit business workflow.
+
+Run the same business-workflow acceptance check against a ready local stack with:
+
+```bash
+scripts/verify-release-acceptance.sh
+```
 
 Create an integrity-checked logical database backup with `scripts/backup-database.sh BACKUP_FILE`. Restoring replaces
 the local database and requires an explicit confirmation value. Follow the [database backup and recovery
@@ -200,6 +207,8 @@ response, idempotency, and error behaviour.
 - [Deployment and rollback](docs/operations/deployment.md)
 - [Performance testing](docs/operations/performance-testing.md)
 - [Security review](docs/operations/security-review.md)
+- [Operator runbook](docs/operations/operator-runbook.md)
+- [Release acceptance](docs/operations/release-acceptance.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
 - [Frontend component standards](docs/frontend/component-standards.md)
 - [API guide](docs/api/README.md)
