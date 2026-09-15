@@ -107,7 +107,9 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 ## Milestone 14: Release candidate
 
-- Run the complete acceptance suite.
+- Run the complete acceptance suite. The integrated local workflow now covers reservation, entry, occupancy, exit,
+  receipts, adjustments, audit history, replay safety, and cancellation in Runtime CI.
 - Resolve release-blocking defects and documentation gaps.
-- Publish the deployment and operator runbooks.
+- Publish the deployment and operator runbooks. Implemented for application deployment, rollback, recovery, and normal
+  parking operations; target-platform incident procedures remain environment-specific.
 - Publish the first versioned release and changelog.
