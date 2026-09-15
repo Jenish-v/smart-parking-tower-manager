@@ -10,6 +10,8 @@ Security CI analyzes Java, JavaScript, and TypeScript with CodeQL on pull reques
 the repository lockfiles, configuration, and secrets for high or critical findings. Dependabot tracks Maven, npm,
 backend and frontend container bases, and GitHub Actions each week. Compose-only service images are reviewed during
 release maintenance. Updates remain ordinary pull requests and must pass the maintained verification suite before merge.
+The supported runtime line and required checks are defined in the
+[dependency maintenance guide](dependency-maintenance.md).
 
 Code analysis and dependency metadata are complementary. A passing workflow does not prove the absence of a
 vulnerability, validate deployment configuration, or assess an external identity provider.
