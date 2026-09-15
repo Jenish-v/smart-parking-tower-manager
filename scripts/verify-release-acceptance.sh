@@ -12,6 +12,8 @@ exit_key=$(cat /proc/sys/kernel/random/uuid)
 adjustment_id=$(cat /proc/sys/kernel/random/uuid)
 vehicle="RC-${reservation_id:0:8}"
 cancel_vehicle="RC-CANCEL-${cancellation_id:0:8}"
+vehicle=${vehicle^^}
+cancel_vehicle=${cancel_vehicle^^}
 work_directory=$(mktemp -d)
 trap 'rm -rf "$work_directory"' EXIT
 
