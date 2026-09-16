@@ -2,8 +2,9 @@
 
 ## Project status
 
-The project is pre-release. No production version is currently supported. The backend validates OpenID Connect access
-tokens and enforces operator and administrator roles, and secured dashboard builds support browser login. Local mode
+`v0.1.0-rc.1` is the current pre-release line. Security fixes are applied to the latest release candidate; no
+internet-facing production version is supported. The backend validates OpenID Connect access tokens and enforces
+operator and administrator roles, and secured dashboard builds support browser login. Local mode
 disables authentication. Verified actors are recorded for fee adjustments. Repository-level hardening and automated
 security checks are implemented, but internet-facing deployment remains blocked until the selected environment and
 identity provider satisfy the open controls in the security review.

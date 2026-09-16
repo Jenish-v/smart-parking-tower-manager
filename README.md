@@ -6,6 +6,14 @@ parking-session, and reservation-domain modules, a versioned REST API, PostgreSQ
 automated backend and frontend checks. Pricing includes versioned rate plans, exact fee calculation, immutable receipts,
 and append-only manual adjustments. The local reference rate is test data, not an active operating price.
 
+## Release status
+
+The current version is `v0.1.0-rc.1`, the first integrated release candidate. A fresh clone runs the maintained local
+stack with Docker Compose, and the tagged commit must pass backend, frontend, security, runtime, recovery, shutdown,
+load, and business-workflow acceptance checks. This status does not approve an internet-facing deployment; see the
+[changelog](CHANGELOG.md), [release acceptance](docs/operations/release-acceptance.md), and
+[security review](docs/operations/security-review.md) for the verified scope and remaining environment decisions.
+
 ## Reference facility
 
 The maintained fixture contains:
