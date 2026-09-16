@@ -207,6 +207,7 @@ response, idempotency, and error behaviour.
 - [Deployment and rollback](docs/operations/deployment.md)
 - [Performance testing](docs/operations/performance-testing.md)
 - [Security review](docs/operations/security-review.md)
+- [Dependency maintenance](docs/operations/dependency-maintenance.md)
 - [Operator runbook](docs/operations/operator-runbook.md)
 - [Release acceptance](docs/operations/release-acceptance.md)
 - [Occupancy reporting](docs/architecture/occupancy-reporting.md)
