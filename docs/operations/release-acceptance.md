@@ -22,3 +22,9 @@ Runtime CI runs it against a disposable database before recovery and shutdown dr
 Local mode intentionally disables OIDC so the workflow has no external identity-provider dependency. Backend security
 tests separately verify token validation and role boundaries. A selected production environment still requires its own
 identity, ingress, backup, rollback, and capacity acceptance evidence.
+
+## Publication gate
+
+The release workflow reads the version from `VERSION`, verifies matching backend, frontend, changelog, and release-note
+metadata, and waits for Backend CI, Frontend CI, Security CI, and Local Runtime CI on the same commit. It publishes the
+GitHub tag and release only when all four workflows succeed. A failed or missing check blocks publication.

@@ -3,12 +3,13 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-Milestones 1 through 13 are implemented. Operations include telemetry, recovery, deployment lifecycle, load regression,
-container hardening, and automated security checks. Environment-specific production controls remain release inputs.
+Milestones 1 through 14 are implemented in `v0.1.0-rc.1`. Operations include telemetry, recovery, deployment lifecycle,
+load regression, container hardening, automated security checks, and guarded release publication. Environment-specific
+production controls remain deployment inputs.
 
 The completed baseline is integrated into `main`. The maintained local runtime builds PostgreSQL, the backend, and the
-operator dashboard through Docker Compose. Work continues by milestone until the release-candidate acceptance criteria
-are satisfied; the roadmap has no calendar-based completion claim.
+operator dashboard through Docker Compose. The release candidate satisfies the repository-level acceptance criteria;
+future work is limited to verified defects, dependency and security maintenance, and production-environment decisions.
 
 ## Milestone 1: Backend baseline
 
@@ -109,7 +110,7 @@ are satisfied; the roadmap has no calendar-based completion claim.
 
 - Run the complete acceptance suite. The integrated local workflow now covers reservation, entry, occupancy, exit,
   receipts, adjustments, audit history, replay safety, and cancellation in Runtime CI.
-- Resolve release-blocking defects and documentation gaps.
+- Resolve release-blocking defects and documentation gaps. Implemented for the maintained local runtime.
 - Publish the deployment and operator runbooks. Implemented for application deployment, rollback, recovery, and normal
   parking operations; target-platform incident procedures remain environment-specific.
-- Publish the first versioned release and changelog.
+- Publish the first versioned release and changelog. Implemented as `v0.1.0-rc.1` with guarded release automation.
