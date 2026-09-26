@@ -2,6 +2,19 @@
 
 Notable changes are recorded in this file. Versions follow Semantic Versioning while the project remains pre-1.0.
 
+## [0.1.0-rc.2] - 2026-09-26
+
+### Changed
+
+- Updated the TypeScript ESLint toolchain from 8.48.0 to 8.70.0.
+- Updated the OIDC client from 3.3.0 to 3.5.0.
+- Updated the React Refresh ESLint plugin from 0.5.6 to 0.5.7.
+
+### Verification
+
+- Backend, frontend, security, and the complete local runtime suite passed for the combined dependency set.
+- No application API, database schema, business workflow, or deployment boundary changed in this maintenance release.
+
 ## [0.1.0-rc.1] - 2026-09-16
 
 ### Added
@@ -27,4 +40,5 @@ Notable changes are recorded in this file. Versions follow Semantic Versioning w
   capacity, and incident-response controls documented in the security and deployment guides.
 - The included facility and CAD rate plan are deterministic reference data, not an operating configuration.
 
+[0.1.0-rc.2]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.1
