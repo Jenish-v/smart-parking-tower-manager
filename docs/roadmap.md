@@ -3,7 +3,7 @@
 Work is delivered as reviewable vertical slices. A milestone is complete only when its implementation, tests, and
 maintained documentation agree.
 
-Milestones 1 through 14 are implemented in `v0.1.0-rc.1`. Operations include telemetry, recovery, deployment lifecycle,
+Milestones 1 through 14 are implemented in `v0.1.0-rc.2`. Operations include telemetry, recovery, deployment lifecycle,
 load regression, container hardening, automated security checks, and guarded release publication. Environment-specific
 production controls remain deployment inputs.
 
