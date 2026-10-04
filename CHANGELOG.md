@@ -2,6 +2,21 @@
 
 Notable changes are recorded in this file. Versions follow Semantic Versioning while the project remains pre-1.0.
 
+## [0.1.0-rc.3] - 2026-10-04
+
+### Changed
+
+- Updated Vitest from 4.0.15 to 5.0.1.
+- Updated TypeScript ESLint from 8.70.0 to 8.70.1.
+- Updated the React Hooks ESLint plugin from 7.0.1 to 7.1.1.
+- Updated ESLint from 9.39.1 to 10.11.0 after its maintained plugin set added compatibility.
+
+### Verification
+
+- Each dependency update passed frontend, security, CodeQL, dependency, and complete local-runtime checks before merge.
+- The release commit must pass backend, frontend, security, and complete local-runtime CI before publication.
+- No application API, database schema, business workflow, or deployment boundary changed in this maintenance release.
+
 ## [0.1.0-rc.2] - 2026-09-26
 
 ### Changed
@@ -40,5 +55,6 @@ Notable changes are recorded in this file. Versions follow Semantic Versioning w
   capacity, and incident-response controls documented in the security and deployment guides.
 - The included facility and CAD rate plan are deterministic reference data, not an operating configuration.
 
+[0.1.0-rc.3]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.1
