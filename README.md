@@ -8,7 +8,7 @@ and append-only manual adjustments. The local reference rate is test data, not a
 
 ## Release status
 
-The current version is `v0.1.0-rc.3`, a maintenance release candidate containing verified dependency and frontend toolchain updates. A fresh
+The current version is `v0.1.0-rc.4`, a maintenance release candidate containing verified frontend dependency and toolchain updates. A fresh
 clone runs the maintained local stack with Docker Compose, and the tagged commit must pass backend, frontend, security,
 runtime, recovery, shutdown, load, and business-workflow acceptance checks. This status does not approve an
 internet-facing deployment; see the [changelog](CHANGELOG.md),
