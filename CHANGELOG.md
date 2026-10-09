@@ -2,6 +2,22 @@
 
 Notable changes are recorded in this file. Versions follow Semantic Versioning while the project remains pre-1.0.
 
+## [0.1.0-rc.4] - 2026-10-09
+
+### Changed
+
+- Updated React Router DOM from 7.18.2 to 7.18.4.
+- Updated Vitest from 5.0.1 to 5.0.3.
+- Updated Testing Library user-event from 14.6.1 to 14.6.7.
+- Updated Testing Library jest-dom from 6.9.1 to 7.0.1 after confirming its Node.js and DOM peer requirements.
+- Updated the ESLint globals dataset from 16.5.0 to 17.13.0.
+
+### Verification
+
+- Each dependency update passed frontend, security, and complete local-runtime checks before and after merge.
+- The release commit must pass backend, frontend, security, and complete local-runtime CI before publication.
+- No application API, database schema, business workflow, or deployment boundary changed in this maintenance release.
+
 ## [0.1.0-rc.3] - 2026-10-04
 
 ### Changed
@@ -55,6 +71,7 @@ Notable changes are recorded in this file. Versions follow Semantic Versioning w
   capacity, and incident-response controls documented in the security and deployment guides.
 - The included facility and CAD rate plan are deterministic reference data, not an operating configuration.
 
+[0.1.0-rc.4]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.4
 [0.1.0-rc.3]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.3
 [0.1.0-rc.2]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.2
 [0.1.0-rc.1]: https://github.com/Jenish-v/smart-parking-tower-manager/releases/tag/v0.1.0-rc.1
