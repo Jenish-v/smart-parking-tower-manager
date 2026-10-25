@@ -48,8 +48,14 @@ jobs:
           grep --fixed-strings --quiet "## [${version}]" CHANGELOG.md
           test -f "docs/releases/v${version}.md"
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v${version}" > /dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Wait for release checks
+        if: steps.metadata.outputs.already_published != 'true'
         shell: bash
         run: |
           required=("Backend CI" "Frontend CI" "Security CI" "Local Runtime CI")
@@ -79,15 +85,12 @@ jobs:
           exit 1
 
       - name: Publish GitHub release
+        if: steps.metadata.outputs.already_published != 'true'
         shell: bash
         env:
           VERSION: ${{ steps.metadata.outputs.version }}
         run: |
           tag="v${VERSION}"
-          if gh release view "$tag" > /dev/null 2>&1; then
-            echo "$tag is already published"
-            exit 0
-          fi
           arguments=(release create "$tag" --target "$RELEASE_SHA" --title "Smart Parking Tower Manager $tag")
           arguments+=(--notes-file "docs/releases/${tag}.md")
           if [[ $VERSION == *-* ]]; then
